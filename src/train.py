@@ -8,6 +8,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, required=True)
     parser.add_argument("--training_type", type=str, required=True)
+    parser.add_argument("--config", type=str, default="")
     parser.add_argument("--debug", action="store_true")
     args, unknown = parser.parse_known_args()
 

@@ -4,18 +4,31 @@
 # Prevent tokenizer parallelism issues
 export TOKENIZERS_PARALLELISM=false
 
-# Check for debug mode
+# Initialize argument arrays
 DEBUG_ARG=()
-if [[ $# -ge 1 && "$1" == "--debug" ]]; then
-    DEBUG_ARG=(--debug)
-    shift
-fi
+CONFIG_ARG=()
 
-# Ensure no unknown arguments are passed
-if [[ $# -gt 0 ]]; then
-    echo "Error: Unknown arguments: $@"
-    exit 1
-fi
+# Process command line arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --debug)
+            DEBUG_ARG=(--debug)
+            shift
+            ;;
+        --config)
+            if [[ $# -lt 2 ]]; then
+                echo "Error: --config requires a path argument."
+                exit 1
+            fi
+            CONFIG_ARG=(--config "$2")
+            shift 2
+            ;;
+        *)
+            echo "Error: Unknown argument: $1"
+            exit 1
+            ;;
+    esac
+done
 
 # Model Configuration
 MODEL_ARGS=(
@@ -81,4 +94,5 @@ accelerate launch train.py \
     "${SYSTEM_ARGS[@]}" \
     "${CHECKPOINT_ARGS[@]}" \
     "${VALIDATION_ARGS[@]}" \
-    "${DEBUG_ARG[@]}"
+    "${DEBUG_ARG[@]}" \
+    "${CONFIG_ARG[@]}"

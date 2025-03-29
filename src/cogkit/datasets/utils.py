@@ -148,7 +148,9 @@ def preprocess_video_with_resize(
         frames = torch.cat([frames, repeated_frames], dim=0)
 
     else:
-        indices = list(range(0, video_num_frames, video_num_frames // max_num_frames))
+        increment = (video_num_frames - 1) / (max_num_frames - 1)
+        indices = [int(i * increment) for i in range(max_num_frames)]
+
         # Shape of frames: [F, C, H, W]
         frames = torch.stack([frame_list[i]["data"] for i in indices]).float().to(device)
 

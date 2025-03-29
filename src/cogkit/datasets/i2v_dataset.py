@@ -3,8 +3,10 @@
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Tuple
+import pickle
 
 import torch
+import numpy as np
 from accelerate.logging import get_logger
 from datasets import load_dataset
 from PIL import Image
@@ -13,8 +15,10 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from torchvision.io import VideoReader
 from typing_extensions import override
+from rlbench.demo import Demo
 
 from cogkit.finetune.diffusion.constants import LOG_LEVEL, LOG_NAME
+from cogkit.finetune.utils.rlbench_utils import interpolate_trajectory
 
 from .utils import (
     get_prompt_embedding,
@@ -47,6 +51,7 @@ class BaseI2VDataset(Dataset):
         device: torch.device,
         trainer: "DiffusionTrainer" = None,
         using_train: bool = True,
+        target_traj_length: int = 32,
         *args,
         **kwargs,
     ) -> None:
@@ -71,6 +76,18 @@ class BaseI2VDataset(Dataset):
                 return video_example
 
             video_data = video_data.map(update_with_prompt, with_indices=True)
+
+            def update_with_trajectory(video_example, idx):
+                traj_name = metadata[idx]["trajectory"]
+                demo: Demo = pickle.load(open(self.data_root / "trajectories" / traj_name, "rb"))
+                trajectory = np.concatenate(
+                    [np.concatenate([obs.gripper_pose, [obs.gripper_open]])[None, ...] for obs in demo]
+                )  # (T, 8)
+                trajectory = interpolate_trajectory(trajectory, target_traj_length)
+                video_example["trajectory"] = trajectory
+                return video_example
+
+            video_data = video_data.map(update_with_trajectory, with_indices=True)
 
             if image_path.exists():
                 image_data = load_dataset("imagefolder", data_dir=image_path, split="train")
@@ -101,7 +118,23 @@ class BaseI2VDataset(Dataset):
 
         else:
             self.data_root = self.data_root / "test"
-            self.data = load_dataset("imagefolder", data_dir=self.data_root, split="train")
+            metadata_path = self.data_root / "metadata.jsonl"
+            
+            metadata = load_dataset("json", data_files=str(metadata_path), split="train")
+            image_data = load_dataset("imagefolder", data_dir=self.data_root, split="train")
+            
+            def update_with_trajectory(image_example, idx):
+                traj_name = metadata[idx]["trajectory"]
+                demo: Demo = pickle.load(open(self.data_root / "trajectories" / traj_name, "rb"))
+                trajectory = np.concatenate(
+                    [np.concatenate([obs.gripper_pose, [obs.gripper_open]])[None, ...] for obs in demo]
+                )
+                trajectory = interpolate_trajectory(trajectory, target_traj_length)
+                image_example["trajectory"] = trajectory
+                return image_example
+            
+            image_data = image_data.map(update_with_trajectory, with_indices=True)
+            self.data = image_data
 
         self.device = device
         self.encode_video = trainer.encode_video
@@ -118,6 +151,9 @@ class BaseI2VDataset(Dataset):
         prompt = self.data[index]["prompt"]
         prompt_embedding = get_prompt_embedding(self.encode_text, prompt, cache_dir, logger)
 
+        # trajectory
+        trajectory = self.data[index]["trajectory"]
+
         ##### image
         image_preprocessed = self.data[index]["image"]
         image_original: Image.Image = image_preprocessed
@@ -132,6 +168,7 @@ class BaseI2VDataset(Dataset):
                 "image_preprocessed": image_preprocessed,
                 "prompt": prompt,
                 "prompt_embedding": prompt_embedding,
+                "trajectory": trajectory,
             }
 
         ##### video
@@ -176,6 +213,7 @@ class BaseI2VDataset(Dataset):
             "prompt_embedding": prompt_embedding,
             "video": video,
             "encoded_video": encoded_video,
+            "trajectory": trajectory,
         }
 
     def preprocess(

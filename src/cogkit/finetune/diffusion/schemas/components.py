@@ -25,3 +25,9 @@ class DiffusionComponents(BaseComponents):
 
     # Scheduler
     scheduler: Any = None
+
+    # Trajectory encoder
+    trajectory_encoder: Any = None
+
+    # Trajectory fuser
+    trajectory_fuser: Any = None

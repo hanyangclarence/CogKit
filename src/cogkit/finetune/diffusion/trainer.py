@@ -72,6 +72,7 @@ class DiffusionTrainer(BaseTrainer):
         self.train_dataset = dataset_cls(
             **(self.args.model_dump()),
             **additional_args,
+            **self.additional_configs["dataset"],
             using_train=True,
         )
         if self.args.do_validation:

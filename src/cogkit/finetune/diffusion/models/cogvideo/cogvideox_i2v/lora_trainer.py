@@ -14,11 +14,13 @@ from diffusers.models.embeddings import get_3d_rotary_pos_embed
 from PIL import Image
 from transformers import AutoTokenizer, T5EncoderModel
 from typing_extensions import override
+from omegaconf import OmegaConf
 
 from cogkit.finetune import register
 from cogkit.finetune.diffusion.schemas import DiffusionComponents
 from cogkit.finetune.diffusion.trainer import DiffusionTrainer
 from cogkit.finetune.utils import unwrap_model
+from cogkit.utils.utils import instantiate_from_config
 
 
 class CogVideoXI2VLoraTrainer(DiffusionTrainer):
@@ -46,6 +48,11 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         components.scheduler = CogVideoXDPMScheduler.from_pretrained(
             model_path, subfolder="scheduler"
         )
+
+        # Load trajectory encoder from configs
+        components.trajectory_encoder = instantiate_from_config(self.additional_configs["trajectory_encoder"])
+
+        components.trajectory_fuser = instantiate_from_config(self.additional_configs["trajectory_fuser"])
 
         return components
 
@@ -96,6 +103,7 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
             "image": [],
             "image_preprocessed": [],
             "encoded_videos": [],
+            "trajectory": [],
         }
 
         for sample in samples:
@@ -104,6 +112,7 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
             image = sample["image"]
             image_preprocessed = sample["image_preprocessed"]
             encoded_video = sample.get("encoded_video", None)
+            trajectory = sample["trajectory"]
 
             ret["prompt"].append(prompt)
             ret["prompt_embedding"].append(prompt_embedding)
@@ -111,12 +120,14 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
             ret["image_preprocessed"].append(image_preprocessed)
             if encoded_video is not None:
                 ret["encoded_videos"].append(encoded_video)
+            ret["trajectory"].append(trajectory)
 
         ret["prompt_embedding"] = torch.stack(ret["prompt_embedding"])
         ret["image_preprocessed"] = torch.stack(ret["image_preprocessed"])
         ret["encoded_videos"] = (
             torch.stack(ret["encoded_videos"]) if ret["encoded_videos"] else None
         )
+        ret["trajectory"] = torch.stack(ret["trajectory"])
 
         return ret
 
@@ -125,10 +136,12 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         prompt_embedding = batch["prompt_embedding"]
         latent = batch["encoded_videos"]
         images = batch["image_preprocessed"]
+        trajectory = batch["trajectory"]
 
         # Shape of prompt_embedding: [B, seq_len, hidden_size]
         # Shape of latent: [B, C, F, H, W]
         # Shape of images: [B, C, H, W]
+        # Shape of trajectory: [B, seq_len, 8]
 
         patch_size_t = self.state.transformer_config.patch_size_t
         if patch_size_t is not None:
@@ -143,6 +156,11 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         # Get prompt embeddings
         _, seq_len, _ = prompt_embedding.shape
         prompt_embedding = prompt_embedding.view(batch_size, seq_len, -1).to(dtype=latent.dtype)
+
+        # embed trajectory
+        traj_embedding = self.components.trajectory_encoder(trajectory)
+        # fuse trajectory with text prompt embedding
+        prompt_embedding = self.components.trajectory_fuser(prompt_embedding, traj_embedding)
 
         # Add frame dimension to images [B,C,H,W] -> [B,C,F,H,W]
         images = images.unsqueeze(2)

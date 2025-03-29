@@ -1,0 +1,14 @@
+trajectory_encoder:
+  target: cogkit.modules.trajectory_encoder.TrajectoryEncoder
+  params:
+    input_dim: 8
+    d_model: 4096
+    nhead: 8
+    num_layers: 2
+    target_traj_len: 226
+
+trajectory_fuser:
+  target: cogkit.modules.fuser.AdditionFuser
+  params:
+
+

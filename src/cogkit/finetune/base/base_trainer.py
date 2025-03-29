@@ -7,6 +7,7 @@ import math
 from abc import ABC, abstractmethod
 from datetime import timedelta
 from pathlib import Path
+from omegaconf import OmegaConf
 
 import diffusers
 import torch
@@ -67,6 +68,7 @@ class BaseTrainer(ABC):
         self.args = self._init_args()
         self.state = self._init_state()
         self.components = self.load_components()
+        self.additional_configs = {}
 
         self.accelerator: Accelerator = None
         self.train_dataset: Dataset = None
@@ -416,6 +418,9 @@ class BaseTrainer(ABC):
         accelerator.end_training()
 
     def fit(self) -> None:
+        additional_configs = OmegaConf.load(self.args.config)
+        self.additional_configs = additional_configs
+
         self.logger.info("Checking settings...")
         self.check_setting()
 
