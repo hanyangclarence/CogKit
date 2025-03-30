@@ -2,7 +2,7 @@ import torch.nn as nn
 
 
 class AdditionFuser(nn.Module):
-    def __init__(self):
+    def __init__(self, empty=True):
         super().__init__()
 
     def forward(self, x1, x2):

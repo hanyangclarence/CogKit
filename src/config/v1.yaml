@@ -10,5 +10,6 @@ trajectory_encoder:
 trajectory_fuser:
   target: cogkit.finetune.modules.fuser.AdditionFuser
   params:
+    empty: true
 
 
