@@ -164,6 +164,10 @@ class BaseTrainer(ABC):
         # For SFT, we train all the parameters in transformer model
         for attr_name, component in vars(self.components).items():
             if hasattr(component, "requires_grad_"):
+                if attr_name == "trajectory_encoder" or attr_name == "trajectory_fuser":
+                    component.requires_grad_(True)
+                    continue
+                
                 if self.args.training_type == "sft" and attr_name == "transformer":
                     component.requires_grad_(True)
                 else:
@@ -597,7 +601,24 @@ class BaseTrainer(ABC):
             # Check if the component is a PyTorch module and not None
             if component is not None and isinstance(component, torch.nn.Module):
                 # Iterate over all parameters in the component
+                trainable_params = {}
+                non_trainable_params = {}
                 for param_name, param in component.named_parameters():
+                    param_names = param_name.split(".")
+                    param_names = [name for name in param_names if not name.isdigit()]
+                    param_name = ".".join(param_names)
                     if param.requires_grad:
-                        # Print the full parameter name with component prefix
-                        self.logger.info(f"\t{attr_name}.{param_name}")
+                        if param_name not in trainable_params:
+                            trainable_params[param_name] = 0
+                        trainable_params += param.numel()
+                    else:
+                        if param_name not in non_trainable_params:
+                            non_trainable_params[param_name] = 0
+                        non_trainable_params += 1
+                self.logger.info(f"\t{attr_name}:")
+                self.logger.info(f"t\tTrainable parameters:")
+                for name, count in trainable_params.items():
+                    self.logger.info(f"\t\t\t{name} x {count}")
+                self.logger.info(f"\t\tNon-trainable parameters:")
+                for name, count in non_trainable_params.items():
+                    self.logger.info(f"\t\t\t{name} x {count}")
