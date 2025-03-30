@@ -307,6 +307,8 @@ class BaseTrainer(ABC):
             "gradient accumulation steps": self.args.gradient_accumulation_steps,
         }
         self.logger.info(f"Training configuration: {json.dumps(info, indent=4)}")
+        
+        self.print_trainable_parameters()
 
         global_step = 0
         first_epoch = 0
@@ -586,3 +588,16 @@ class BaseTrainer(ABC):
                     logger=self.logger,
                 )
                 self.accelerator.save_state(save_path, safe_serialization=True)
+
+    def print_trainable_parameters(self):
+        self.logger.info("Trainable parameters:")
+        # Iterate over all attributes in the model instance
+        for attr_name in vars(self.components):
+            component = getattr(self.components, attr_name)
+            # Check if the component is a PyTorch module and not None
+            if component is not None and isinstance(component, torch.nn.Module):
+                # Iterate over all parameters in the component
+                for param_name, param in component.named_parameters():
+                    if param.requires_grad:
+                        # Print the full parameter name with component prefix
+                        self.logger.info(f"\t{attr_name}.{param_name}")
