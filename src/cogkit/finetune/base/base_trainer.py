@@ -594,19 +594,18 @@ class BaseTrainer(ABC):
                 self.accelerator.save_state(save_path, safe_serialization=True)
 
     def print_trainable_parameters(self):
-        self.logger.info("Trainable parameters:")
         # Iterate over all attributes in the model instance
+        trainable_params = {}
+        non_trainable_params = {}
         for attr_name in vars(self.components):
             component = getattr(self.components, attr_name)
             # Check if the component is a PyTorch module and not None
             if component is not None and isinstance(component, torch.nn.Module):
                 # Iterate over all parameters in the component
-                trainable_params = {}
-                non_trainable_params = {}
                 for param_name, param in component.named_parameters():
                     param_names = param_name.split(".")
                     param_names = [name for name in param_names if not name.isdigit()]
-                    param_name = ".".join(param_names)
+                    param_name = f"{attr_name}." + ".".join(param_names)
                     if param.requires_grad:
                         if param_name not in trainable_params:
                             trainable_params[param_name] = 0
@@ -615,10 +614,9 @@ class BaseTrainer(ABC):
                         if param_name not in non_trainable_params:
                             non_trainable_params[param_name] = 0
                         non_trainable_params[param_name] += 1
-                self.logger.info(f"\t{attr_name}:")
-                self.logger.info(f"t\tTrainable parameters:")
-                for name, count in trainable_params.items():
-                    self.logger.info(f"\t\t\t{name} x {count}")
-                self.logger.info(f"\t\tNon-trainable parameters:")
-                for name, count in non_trainable_params.items():
-                    self.logger.info(f"\t\t\t{name} x {count}")
+        self.logger.info(f"Trainable parameters:")
+        for name, count in trainable_params.items():
+            self.logger.info(f"\t{name} x {count}")
+        self.logger.info(f"Non-trainable parameters:")
+        for name, count in non_trainable_params.items():
+            self.logger.info(f"\t{name} x {count}")
