@@ -12,4 +12,7 @@ trajectory_fuser:
   params:
     empty: true
 
+dataset:
+  target_traj_length: 226
+
 
