@@ -418,9 +418,6 @@ class BaseTrainer(ABC):
         accelerator.end_training()
 
     def fit(self) -> None:
-        additional_configs = OmegaConf.load(self.args.config)
-        self.additional_configs = additional_configs
-
         self.logger.info("Checking settings...")
         self.check_setting()
 

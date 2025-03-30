@@ -50,6 +50,9 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         )
 
         # Load trajectory encoder from configs
+        additional_configs = OmegaConf.load(self.args.config)
+        self.additional_configs = additional_configs
+
         components.trajectory_encoder = instantiate_from_config(self.additional_configs["trajectory_encoder"])
 
         components.trajectory_fuser = instantiate_from_config(self.additional_configs["trajectory_fuser"])
