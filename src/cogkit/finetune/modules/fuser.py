@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 
-class AdditionFusor(nn.Module):
+class AdditionFuser(nn.Module):
     def __init__(self):
         super().__init__()
 
