@@ -13,6 +13,7 @@ from cogkit.datasets import I2VDatasetWithResize, T2IDatasetWithResize, T2VDatas
 from cogkit.finetune.base import BaseTrainer
 from diffusers.pipelines import DiffusionPipeline
 from diffusers.utils.export_utils import export_to_video
+from omegaconf import OmegaConf
 
 from ..utils import (
     cast_training_params,
@@ -68,7 +69,7 @@ class DiffusionTrainer(BaseTrainer):
             "device": self.accelerator.device,
             "trainer": self,
         }
-
+        self.additional_configs = OmegaConf.load(self.args.config)
         self.train_dataset = dataset_cls(
             **(self.args.model_dump()),
             **additional_args,
