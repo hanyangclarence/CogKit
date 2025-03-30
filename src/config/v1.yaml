@@ -1,5 +1,5 @@
 trajectory_encoder:
-  target: cogkit.modules.trajectory_encoder.TrajectoryEncoder
+  target: cogkit.finetune.modules.trajectory_encoder.TrajectoryEncoder
   params:
     input_dim: 8
     d_model: 4096
@@ -8,7 +8,7 @@ trajectory_encoder:
     target_traj_len: 226
 
 trajectory_fuser:
-  target: cogkit.modules.fuser.AdditionFuser
+  target: cogkit.finetune.modules.fuser.AdditionFuser
   params:
 
 
