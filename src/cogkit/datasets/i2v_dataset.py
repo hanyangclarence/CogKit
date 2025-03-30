@@ -153,7 +153,7 @@ class BaseI2VDataset(Dataset):
 
         # trajectory
         trajectory = self.data[index]["trajectory"]
-        trajectory = torch.tensor(trajectory, device=self.device)
+        trajectory = torch.tensor(trajectory).float()
 
         ##### image
         image_preprocessed = self.data[index]["image"]
