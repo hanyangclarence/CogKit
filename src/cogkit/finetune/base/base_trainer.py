@@ -610,11 +610,11 @@ class BaseTrainer(ABC):
                     if param.requires_grad:
                         if param_name not in trainable_params:
                             trainable_params[param_name] = 0
-                        trainable_params += param.numel()
+                        trainable_params[param_name] += 1
                     else:
                         if param_name not in non_trainable_params:
                             non_trainable_params[param_name] = 0
-                        non_trainable_params += 1
+                        non_trainable_params[param_name] += 1
                 self.logger.info(f"\t{attr_name}:")
                 self.logger.info(f"t\tTrainable parameters:")
                 for name, count in trainable_params.items():
