@@ -15,6 +15,7 @@ class TrajectoryEncoder(nn.Module):
 
     def forward(self, x):
         # x: (batch, T, 8)
+        x = x.to(self.embed.weight.dtype)
         x = self.embed(x)  # (batch, T, D)
         x = x.permute(1, 0, 2)  # (T, batch, D)
         x = self.pos_encoder(x)
