@@ -66,6 +66,10 @@ class BaseArgs(BaseModel):
     ########## Validation ##########
     do_validation: bool = False
     validation_steps: int | None  # if set, should be a multiple of checkpointing_steps
+    
+    ########## Additional configs ##########
+    config: str = ""
+    debug: bool = False
 
     @field_validator("validation_steps")
     def validate_validation_steps(cls, v: int | None, info: ValidationInfo) -> int | None:
