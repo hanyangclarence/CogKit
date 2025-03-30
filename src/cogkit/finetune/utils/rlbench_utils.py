@@ -8,7 +8,8 @@ def normalise_quat(x: torch.Tensor):
 
 
 def interpolate_trajectory(trajectory, interpolation_length: int):
-    trajectory = trajectory.numpy()
+    if type(trajectory) == torch.Tensor:
+        trajectory = trajectory.numpy()
     # Calculate the current number of steps
     old_num_steps = len(trajectory)
 
