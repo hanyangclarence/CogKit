@@ -46,12 +46,12 @@ OUTPUT_ARGS=(
 
 # Data Configuration
 DATA_ARGS=(
-    --data_root "/gpfs/u/scratch/LMCG/LMCGhazh/yanghan/embodied_o1/CogKit/quickstart/data/i2v"
+    --data_root "/gpfs/u/home/LMCG/LMCGhazh/scratch/enroot/rlbench_data/root/RACER-DataGen/racer_datagen/video_data"
 
     # Note:
     #  for CogVideoX series models, number of training frames should be **8N+1**
     #  for CogVideoX1.5 series models, number of training frames should be **16N+1**
-    --train_resolution "17x480x720"  # (frames x height x width)
+    --train_resolution "17x256x256"  # (frames x height x width)
 )
 
 # Training Configuration
