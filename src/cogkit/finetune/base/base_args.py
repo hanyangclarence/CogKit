@@ -150,6 +150,7 @@ class BaseArgs(BaseModel):
         # Validation
         parser.add_argument("--do_validation", type=lambda x: x.lower() == "true", default=False)
         parser.add_argument("--validation_steps", type=int, default=None)
+        parser.add_argument("--validation_num", type=int, default=1)
 
         # Additional configs
         parser.add_argument("--config", type=str, default="")

@@ -132,7 +132,7 @@ class DiffusionTrainer(BaseTrainer):
                 batch_size=1,
                 num_workers=self.args.num_workers,
                 pin_memory=self.args.pin_memory,
-                shuffle=False,
+                shuffle=True,
             )
 
     @override
@@ -177,6 +177,8 @@ class DiffusionTrainer(BaseTrainer):
 
         all_processes_artifacts = []
         for i, batch in enumerate(self.test_data_loader):
+            if i >= self.args.validation_num:
+                break
             # only batch size = 1 is currently supported
             prompt = batch.get("prompt", [])
             prompt = prompt[0] if prompt else prompt

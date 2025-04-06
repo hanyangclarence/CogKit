@@ -51,13 +51,13 @@ DATA_ARGS=(
     # Note:
     #  for CogVideoX series models, number of training frames should be **8N+1**
     #  for CogVideoX1.5 series models, number of training frames should be **16N+1**
-    --train_resolution "17x256x256"  # (frames x height x width)
+    --train_resolution "17x480x720"  # (frames x height x width)
 )
 
 # Training Configuration
 TRAIN_ARGS=(
     --seed 42  # random seed
-    --train_epochs 1  # number of training epochs
+    --train_epochs 9999  # number of training epochs
     --batch_size 1
     --gradient_accumulation_steps 1
     --mixed_precision "fp16"  # ["no", "fp16"]
@@ -83,6 +83,7 @@ VALIDATION_ARGS=(
     --do_validation true   # ["true", "false"]
     --validation_steps 10  # should be multiple of checkpointing_steps
     --gen_fps 16
+    --validation_num 1  # number of validation samples
 )
 
 # Combine all arguments and launch training
