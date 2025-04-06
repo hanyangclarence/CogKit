@@ -269,12 +269,17 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         Return the data that needs to be saved. For videos, the data format is List[PIL],
         and for images, the data format is PIL
         """
-        prompt, prompt_embedding, image, _ = (
+        prompt, prompt_embedding, image, trajectory, _ = (
             eval_data["prompt"],
             eval_data["prompt_embedding"],
             eval_data["image"],
+            eval_data["trajectory"],
             eval_data["video"],
         )
+
+        # fuse trajectory with text prompt embedding
+        traj_embedding = self.components.trajectory_encoder(trajectory)
+        prompt_embedding = self.components.trajectory_fuser(prompt_embedding, traj_embedding)
 
         video_generate = pipe(
             num_frames=self.state.train_resolution[0],

@@ -181,6 +181,7 @@ class DiffusionTrainer(BaseTrainer):
             prompt = batch.get("prompt", [])
             prompt = prompt[0] if prompt else prompt
             prompt_embedding = batch.get("prompt_embedding", None)
+            trajectory = batch.get("trajectory", None)
 
             image = batch.get("image", [])
             image = image[0] if image else image
@@ -202,6 +203,7 @@ class DiffusionTrainer(BaseTrainer):
                     "encoded_image": encoded_image,
                     "video": video,
                     "encoded_video": encoded_video,
+                    "trajectory": trajectory,
                 },
                 pipe,
             )
