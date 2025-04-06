@@ -69,14 +69,14 @@ SYSTEM_ARGS=(
 # Checkpointing Configuration
 CHECKPOINT_ARGS=(
     --checkpointing_steps 10 # save checkpoint every x steps
-    --checkpointing_limit 2 # maximum number of checkpoints to keep, after which the oldest one is deleted
+    --checkpointing_limit 1 # maximum number of checkpoints to keep, after which the oldest one is deleted
     # --resume_from_checkpoint "/absolute/path/to/checkpoint_dir"  # if you want to resume from a checkpoint
 )
 
 # Validation Configuration
 VALIDATION_ARGS=(
     --do_validation true   # ["true", "false"]
-    --validation_steps 10  # should be multiple of checkpointing_steps
+    --validation_steps 500  # should be multiple of checkpointing_steps
     --gen_fps 16
     --validation_num 1  # number of validation samples
 )
