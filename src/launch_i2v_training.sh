@@ -46,7 +46,7 @@ OUTPUT_ARGS=(
 
 # Data Configuration
 DATA_ARGS=(
-    --data_root "/gpfs/u/home/LMCG/LMCGhazh/scratch/enroot/rlbench_data/root/RACER-DataGen/racer_datagen/rlbench_videos"
+    --data_root "/gpfs/u/scratch/LMCG/LMCGhazh/enroot/rlbench_data/root/RACER-DataGen/racer_datagen/rlbench_videos"
 
     # Note:
     #  for CogVideoX series models, number of training frames should be **8N+1**
