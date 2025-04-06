@@ -129,16 +129,23 @@ class BaseI2VDataset(Dataset):
             
             metadata = load_dataset("json", data_files=str(metadata_path), split="train")
             image_data = load_dataset("imagefolder", data_dir=self.data_root, split="train")
-            
-            def update_with_trajectory(image_example, idx):
+
+            def update_with_trajectory(video_example, idx):
                 traj_name = metadata[idx]["trajectory"]
                 demo: Demo = pickle.load(open(self.data_root / "trajectories" / traj_name, "rb"))
-                trajectory = np.concatenate(
-                    [np.concatenate([obs.gripper_pose, [obs.gripper_open]])[None, ...] for obs in demo]
-                )
-                trajectory = interpolate_trajectory(trajectory, target_traj_length)
-                image_example["trajectory"] = trajectory
-                return image_example
+
+                joint_traj = demo[-1].gt_path  # (T, 7)
+                joint_traj = interpolate_joint_trajectory(joint_traj, target_traj_length)
+
+                gripper_start = demo[0].gripper_open
+                gripper_end = demo[-1].gripper_open
+                gripper_status_traj = np.zeros((target_traj_length, 2))
+                gripper_status_traj[:, 0] = gripper_start
+                gripper_status_traj[:, 1] = gripper_end
+                trajectory = np.concatenate([joint_traj, gripper_status_traj], axis=1)
+
+                video_example["trajectory"] = trajectory
+                return video_example
             
             image_data = image_data.map(update_with_trajectory, with_indices=True)
             self.data = image_data
