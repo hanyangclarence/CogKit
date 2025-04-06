@@ -66,6 +66,7 @@ class BaseArgs(BaseModel):
     ########## Validation ##########
     do_validation: bool = False
     validation_steps: int | None  # if set, should be a multiple of checkpointing_steps
+    validation_num: int = 1
     
     ########## Additional configs ##########
     config: str = ""
