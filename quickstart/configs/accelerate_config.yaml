@@ -10,7 +10,7 @@ debug: false
 
 distributed_type: DEEPSPEED
 deepspeed_config:
-  deepspeed_config_file: /path/to/configs/zero/zero2.yaml  # e.g. need use absolute path
+  deepspeed_config_file: /gpfs/u/scratch/LMCG/LMCGhazh/yanghan/embodied_o1/CogKit/quickstart/configs/zero/zero2.yaml  # e.g. need use absolute path
   zero3_init_flag: false
 
 downcast_bf16: 'no'
