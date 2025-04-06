@@ -6,7 +6,7 @@ export TOKENIZERS_PARALLELISM=false
 
 # Initialize argument arrays
 DEBUG_ARG=()
-CONFIG_ARG=()
+CONFIG_ARG=(--config "config/v1.yaml")
 
 # Process command line arguments
 while [[ $# -gt 0 ]]; do
@@ -14,14 +14,6 @@ while [[ $# -gt 0 ]]; do
         --debug)
             DEBUG_ARG=(--debug)
             shift
-            ;;
-        --config)
-            if [[ $# -lt 2 ]]; then
-                echo "Error: --config requires a path argument."
-                exit 1
-            fi
-            CONFIG_ARG=(--config "$2")
-            shift 2
             ;;
         *)
             echo "Error: Unknown argument: $1"
