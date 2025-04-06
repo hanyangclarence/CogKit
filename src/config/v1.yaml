@@ -1,7 +1,7 @@
 trajectory_encoder:
   target: cogkit.finetune.modules.trajectory_encoder.TrajectoryEncoder
   params:
-    input_dim: 8
+    input_dim: 9
     d_model: 4096
     nhead: 8
     num_layers: 2

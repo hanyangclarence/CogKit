@@ -18,7 +18,7 @@ from typing_extensions import override
 from rlbench.demo import Demo
 
 from cogkit.finetune.diffusion.constants import LOG_LEVEL, LOG_NAME
-from cogkit.finetune.utils.rlbench_utils import interpolate_trajectory
+from cogkit.finetune.utils.rlbench_utils import interpolate_joint_trajectory
 
 from .utils import (
     get_prompt_embedding,
@@ -80,10 +80,17 @@ class BaseI2VDataset(Dataset):
             def update_with_trajectory(video_example, idx):
                 traj_name = metadata[idx]["trajectory"]
                 demo: Demo = pickle.load(open(self.data_root / "trajectories" / traj_name, "rb"))
-                trajectory = np.concatenate(
-                    [np.concatenate([obs.gripper_pose, [obs.gripper_open]])[None, ...] for obs in demo]
-                )  # (T, 8)
-                trajectory = interpolate_trajectory(trajectory, target_traj_length)
+
+                joint_traj = demo[-1].gt_path  # (T, 7)
+                joint_traj = interpolate_joint_trajectory(joint_traj, target_traj_length)
+
+                gripper_start = demo[0].gripper_open
+                gripper_end = demo[-1].gripper_open
+                gripper_status_traj = np.zeros((target_traj_length, 2))
+                gripper_status_traj[:, 0] = gripper_start
+                gripper_status_traj[:, 1] = gripper_end
+                trajectory = np.concatenate([joint_traj, gripper_status_traj], axis=1)
+
                 video_example["trajectory"] = trajectory
                 return video_example
 
