@@ -164,12 +164,15 @@ class BaseTrainer(ABC):
         # For SFT, we train all the parameters in transformer model
         for attr_name, component in vars(self.components).items():
             if hasattr(component, "requires_grad_"):
-                if attr_name == "trajectory_encoder" or attr_name == "trajectory_fuser":
-                    component.requires_grad_(True)
-                    continue
-                
-                if self.args.training_type == "sft" and attr_name == "transformer":
-                    component.requires_grad_(True)
+                if attr_name == "transformer":
+                    # the trajectory encoder and trajectory fuser are always trainable
+                    component.trajectory_encoder.requires_grad_(True)
+                    component.trajectory_fuser.requires_grad_(True)
+
+                    if self.args.training_type == "sft":
+                        component.transformer.requires_grad_(True)
+                    else:
+                        component.transformer.requires_grad_(False)
                 else:
                     component.requires_grad_(False)
 
@@ -180,7 +183,7 @@ class BaseTrainer(ABC):
                 init_lora_weights=True,
                 target_modules=self.args.target_modules,
             )
-            self.components.transformer.add_adapter(transformer_lora_config)
+            self.components.transformer.transformer.add_adapter(transformer_lora_config)
             self.prepare_saving_loading_hooks(transformer_lora_config)
 
         # Load components needed for training to GPU (except transformer), and cast them to the specified data type
@@ -188,7 +191,7 @@ class BaseTrainer(ABC):
         self.move_components_to_device(dtype=weight_dtype, ignore_list=ignore_list)
 
         if self.args.gradient_checkpointing:
-            self.components.transformer.enable_gradient_checkpointing()
+            self.components.transformer.transformer.enable_gradient_checkpointing()
 
     def prepare_optimizer(self) -> None:
         # Make sure the trainable params are in float32
@@ -525,17 +528,28 @@ class BaseTrainer(ABC):
                         type(unwrap_model(self.accelerator, self.components.transformer)),
                     ):
                         model = unwrap_model(self.accelerator, model)
-                        transformer_lora_layers_to_save = get_peft_model_state_dict(model)
+                        transformer_lora_layers_to_save = get_peft_model_state_dict(model.transformer)
                     else:
                         raise ValueError(f"Unexpected save model: {model.__class__}")
 
                     # make sure to pop weight so that corresponding model is not saved again
                     if weights:
                         weights.pop()
+                    if transformer_lora_layers_to_save is not None:
+                        break
 
                 self.components.pipeline_cls.save_lora_weights(
                     output_dir,
                     transformer_lora_layers=transformer_lora_layers_to_save,
+                )
+                # also, save the weight of the trajectory encoder/fusor
+                traj_module_dict = {
+                    "trajectory_encoder": model.trajectory_encoder.state_dict(),
+                    "trajectory_fuser": model.trajectory_fuser.state_dict(),
+                }
+                torch.save(
+                    traj_module_dict,
+                    Path(output_dir, "trajectory_modules.pt"),
                 )
 
         def load_model_hook(models, input_dir):
@@ -555,7 +569,7 @@ class BaseTrainer(ABC):
                 transformer_ = unwrap_model(
                     self.accelerator, self.components.transformer
                 ).__class__.from_pretrained(self.args.model_path, subfolder="transformer")
-                transformer_.add_adapter(transformer_lora_config)
+                transformer_.transformer.add_adapter(transformer_lora_config)
 
             lora_state_dict = self.components.pipeline_cls.lora_state_dict(input_dir)
             transformer_state_dict = {
@@ -564,7 +578,7 @@ class BaseTrainer(ABC):
                 if k.startswith("transformer.")
             }
             incompatible_keys = set_peft_model_state_dict(
-                transformer_, transformer_state_dict, adapter_name="default"
+                transformer_.transformer, transformer_state_dict, adapter_name="default"
             )
             if incompatible_keys is not None:
                 # check only for unexpected keys
@@ -574,6 +588,20 @@ class BaseTrainer(ABC):
                         f"Loading adapter weights from state_dict led to unexpected keys not found in the model: "
                         f" {unexpected_keys}. "
                     )
+
+            # load the trajectory encoder/fusor
+            traj_module_path = Path(input_dir, "trajectory_modules.pt")
+            assert traj_module_path.exists(), f"Cannot find {traj_module_path}"
+            traj_module_dict = torch.load(traj_module_path, map_location="cpu")
+            transformer_.trajectory_encoder.load_state_dict(
+                traj_module_dict["trajectory_encoder"]
+            )
+            transformer_.trajectory_fuser.load_state_dict(
+                traj_module_dict["trajectory_fuser"]
+            )
+            self.logger.info(
+                f"Loaded trajectory encoder/fusor from {traj_module_path}"
+            )
 
         self.accelerator.register_save_state_pre_hook(save_model_hook)
         self.accelerator.register_load_state_pre_hook(load_model_hook)

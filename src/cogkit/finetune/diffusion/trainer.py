@@ -50,7 +50,7 @@ class DiffusionTrainer(BaseTrainer):
             if self.args.enable_tiling:
                 self.components.vae.enable_tiling()
 
-        self.state.transformer_config = self.components.transformer.config
+        self.state.transformer_config = self.components.transformer.transformer.config
 
     @override
     def prepare_dataset(self) -> None:

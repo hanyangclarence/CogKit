@@ -50,7 +50,7 @@ DATA_ARGS=(
 TRAIN_ARGS=(
     --seed 42  # random seed
     --train_epochs 1000  # number of training epochs
-    --batch_size 2
+    --batch_size 1
     --gradient_accumulation_steps 1
     --mixed_precision "fp16"  # ["no", "fp16"]
     --learning_rate 2e-5

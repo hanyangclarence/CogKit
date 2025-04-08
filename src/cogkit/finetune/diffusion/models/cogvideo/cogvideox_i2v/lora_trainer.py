@@ -17,7 +17,7 @@ from typing_extensions import override
 from omegaconf import OmegaConf
 
 from cogkit.finetune import register
-from cogkit.finetune.diffusion.schemas import DiffusionComponents
+from cogkit.finetune.diffusion.schemas import DiffusionComponents, TrainableModel
 from cogkit.finetune.diffusion.trainer import DiffusionTrainer
 from cogkit.finetune.utils import unwrap_model
 from cogkit.utils.utils import instantiate_from_config
@@ -30,6 +30,7 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
     def load_components(self) -> DiffusionComponents:
         components = DiffusionComponents()
         model_path = str(self.args.model_path)
+        self.additional_configs = OmegaConf.load(self.args.config)
 
         components.pipeline_cls = CogVideoXImageToVideoPipeline
 
@@ -39,8 +40,12 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
             model_path, subfolder="text_encoder"
         )
 
-        components.transformer = CogVideoXTransformer3DModel.from_pretrained(
-            model_path, subfolder="transformer"
+        components.transformer = TrainableModel(
+            transformer=CogVideoXTransformer3DModel.from_pretrained(
+                model_path, subfolder="transformer"
+            ),
+            trajectory_encoder=instantiate_from_config(self.additional_configs["trajectory_encoder"]),
+            trajectory_fuser=instantiate_from_config(self.additional_configs["trajectory_fuser"]),
         )
 
         components.vae = AutoencoderKLCogVideoX.from_pretrained(model_path, subfolder="vae")
@@ -48,13 +53,6 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         components.scheduler = CogVideoXDPMScheduler.from_pretrained(
             model_path, subfolder="scheduler"
         )
-
-        # Load trajectory encoder from configs
-        self.additional_configs = OmegaConf.load(self.args.config)
-
-        components.trajectory_encoder = instantiate_from_config(self.additional_configs["trajectory_encoder"])
-
-        components.trajectory_fuser = instantiate_from_config(self.additional_configs["trajectory_fuser"])
 
         return components
 
@@ -64,7 +62,7 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
             tokenizer=self.components.tokenizer,
             text_encoder=self.components.text_encoder,
             vae=self.components.vae,
-            transformer=unwrap_model(self.accelerator, self.components.transformer),
+            transformer=unwrap_model(self.accelerator, self.components.transformer).transformer,
             scheduler=self.components.scheduler,
         )
         return pipe
@@ -160,9 +158,9 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         prompt_embedding = prompt_embedding.view(batch_size, seq_len, -1).to(dtype=latent.dtype)
 
         # embed trajectory
-        traj_embedding = self.components.trajectory_encoder(trajectory)
+        traj_embedding = self.components.transformer.encode_trajectory(trajectory)
         # fuse trajectory with text prompt embedding
-        prompt_embedding = self.components.trajectory_fuser(prompt_embedding, traj_embedding)
+        prompt_embedding = self.components.transformer.fuse_trajectory(prompt_embedding, traj_embedding)
 
         # Add frame dimension to images [B,C,H,W] -> [B,C,F,H,W]
         images = images.unsqueeze(2)
@@ -278,8 +276,8 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         )
 
         # fuse trajectory with text prompt embedding
-        traj_embedding = self.components.trajectory_encoder(trajectory)
-        prompt_embedding = self.components.trajectory_fuser(prompt_embedding, traj_embedding)
+        traj_embedding = self.components.transformer.encode_trajectory(trajectory)
+        prompt_embedding = self.components.transformer.fuse_trajectory(prompt_embedding, traj_embedding)
 
         video_generate = pipe(
             num_frames=self.state.train_resolution[0],
