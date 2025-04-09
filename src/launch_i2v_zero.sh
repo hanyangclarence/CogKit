@@ -53,7 +53,7 @@ TRAIN_ARGS=(
     --learning_rate 2e-5
 
     #########   Please keep consistent with deepspeed config file ##########
-    --batch_size 1
+    --batch_size 2
     --gradient_accumulation_steps 1
     --mixed_precision "fp16"  # ["no", "fp16"]  Note: CogVideoX-2B only supports fp16 training
     ########################################################################
@@ -68,14 +68,14 @@ SYSTEM_ARGS=(
 
 # Checkpointing Configuration
 CHECKPOINT_ARGS=(
-    --checkpointing_steps 10 # save checkpoint every x steps
+    --checkpointing_steps 500 # save checkpoint every x steps
     --checkpointing_limit 1 # maximum number of checkpoints to keep, after which the oldest one is deleted
     # --resume_from_checkpoint "/absolute/path/to/checkpoint_dir"  # if you want to resume from a checkpoint
 )
 
 # Validation Configuration
 VALIDATION_ARGS=(
-    --do_validation true   # ["true", "false"]
+    --do_validation false   # ["true", "false"]
     --validation_steps 500  # should be multiple of checkpointing_steps
     --gen_fps 16
     --validation_num 1  # number of validation samples
