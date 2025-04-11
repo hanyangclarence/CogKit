@@ -8,7 +8,7 @@
 #SBATCH --time=06:00:00
 #SBATCH --gres=gpu:1
 
-
+source /gpfs/u/home/LMCG/LMCGhazh/scratch/miniconda3x86/etc/profile.d/conda.sh
 conda activate cogvideo
 
 bash launch_i2v_lora.sh
