@@ -20,7 +20,7 @@ from rlbench.demo import Demo
 import pyarrow as pa
 
 from cogkit.finetune.diffusion.constants import LOG_LEVEL, LOG_NAME
-from cogkit.finetune.utils.rlbench_utils import interpolate_joint_trajectory
+from cogkit.utils.utils import get_obj_from_str
 
 from .utils import (
     get_prompt_embedding,
@@ -54,6 +54,7 @@ class BaseI2VDataset(Dataset):
         trainer: "DiffusionTrainer" = None,
         using_train: bool = True,
         target_traj_length: int = 32,
+        get_traj_fn_name: str = "",
         *args,
         **kwargs,
     ) -> None:
@@ -81,15 +82,8 @@ class BaseI2VDataset(Dataset):
             traj_name = metadata[idx]["trajectory"]
             demo: Demo = pickle.load(open(self.data_root / "trajectories" / traj_name, "rb"))
 
-            joint_traj = demo[-1].gt_path  # (T, 7)
-            joint_traj = interpolate_joint_trajectory(joint_traj, target_traj_length)
-
-            gripper_start = demo[0].gripper_open
-            gripper_end = demo[-1].gripper_open
-            gripper_status_traj = np.zeros((target_traj_length, 2))
-            gripper_status_traj[:, 0] = gripper_start
-            gripper_status_traj[:, 1] = gripper_end
-            trajectory = np.concatenate([joint_traj, gripper_status_traj], axis=1)
+            get_traj_fn = get_obj_from_str(get_traj_fn_name)
+            trajectory = get_traj_fn(demo, target_traj_length)
 
             video_example["trajectory"] = trajectory
             return video_example

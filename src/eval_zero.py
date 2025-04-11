@@ -22,7 +22,7 @@ from decord import VideoReader
 from decord import cpu
 
 from cogkit.finetune.diffusion.schemas import TrainableModel
-from cogkit.utils.utils import instantiate_from_config
+from cogkit.utils.utils import instantiate_from_config, get_obj_from_str
 from cogkit.datasets.utils import preprocess_image_with_resize
 from cogkit.finetune.utils.rlbench_utils import interpolate_joint_trajectory
 from cogkit.finetune.diffusion.schemas.components import DiffusionComponents, TrainableModel
@@ -286,10 +286,6 @@ class LoraEvaluator:
         self.scheduler = CogVideoXDPMScheduler.from_pretrained(model_name, subfolder="scheduler")
 
         # load weights
-        # state_dict = torch.load(ckpt_dir, map_location="cpu")
-        # # If keys have 'module.' prefix (from DistributedDataParallel)
-        # state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
-        # self.transformer.load_state_dict(state_dict)
         load_state_dict_from_zero_checkpoint(self.transformer, ckpt_dir)
         print(f"Loaded checkpoint from {ckpt_dir}")
 
@@ -345,14 +341,6 @@ class LoraEvaluator:
         prompt_embedding = self.transformer.fuse_trajectory(prompt_embedding, traj_embedding)
 
         generator = torch.Generator(device=self.device)
-        # video_generate = self.pipe(
-        #     num_frames=self.resolution[0],
-        #     height=self.resolution[1],
-        #     width=self.resolution[2],
-        #     prompt_embeds=prompt_embedding,
-        #     image=image,
-        #     generator=generator,
-        # ).frames[0]
         video_generate = call(
             self.pipe,
             num_frames=self.resolution[0],
@@ -397,21 +385,14 @@ if __name__ == "__main__":
         video_path_data = [json.loads(line) for line in f]
     video_path_data = {data["id"]: data["file_name"] for data in video_path_data}
     target_traj_length = config["trajectory_encoder"]["params"]["target_traj_len"]
+    get_traj_fn = get_obj_from_str(config["dataset"]["get_traj_fn_name"])
     for data in test_data:
         idx = data["id"]
         prompt = data["prompt"]
         
         traj_path = data["trajectory"]
         demo = pickle.load(open(f"{data_dir}/trajectories/{traj_path}", "rb"))
-        joint_traj = demo[-1].gt_path  # (T, 7)
-        joint_traj = interpolate_joint_trajectory(joint_traj, target_traj_length)
-
-        gripper_start = demo[0].gripper_open
-        gripper_end = demo[-1].gripper_open
-        gripper_status_traj = np.zeros((target_traj_length, 2))
-        gripper_status_traj[:, 0] = gripper_start
-        gripper_status_traj[:, 1] = gripper_end
-        trajectory = np.concatenate([joint_traj, gripper_status_traj], axis=1)
+        trajectory = get_traj_fn(demo, target_traj_length)
         
         video_path = f"{data_dir}/videos/{video_path_data[idx]}"
         vr = VideoReader(video_path, ctx=cpu(0))

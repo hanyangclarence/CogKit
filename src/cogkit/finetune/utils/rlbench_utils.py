@@ -7,7 +7,7 @@ def normalise_quat(x: torch.Tensor):
     return x / torch.clamp(x.square().sum(dim=-1).sqrt().unsqueeze(-1), min=1e-10)
 
 
-def interpolate_trajectory(trajectory, interpolation_length: int):
+def interpolate_joint_gripper_trajectory(trajectory, interpolation_length: int):
     if type(trajectory) == torch.Tensor:
         trajectory = trajectory.numpy()
     # Calculate the current number of steps
