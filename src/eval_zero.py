@@ -15,6 +15,7 @@ from diffusers import (
     CogVideoXTransformer3DModel,
 )
 from diffusers.utils.export_utils import export_to_video
+from diffusers.pipelines.cogvideo.pipeline_cogvideox_image2video import *
 from transformers import AutoTokenizer, T5EncoderModel
 from torchvision import transforms
 from decord import VideoReader
@@ -25,6 +26,7 @@ from cogkit.utils.utils import instantiate_from_config
 from cogkit.datasets.utils import preprocess_image_with_resize
 from cogkit.finetune.utils.rlbench_utils import interpolate_joint_trajectory
 from cogkit.finetune.diffusion.schemas.components import DiffusionComponents, TrainableModel
+from deepspeed.utils.zero_to_fp32 import load_state_dict_from_zero_checkpoint
 
 
 def call(
@@ -284,10 +286,12 @@ class LoraEvaluator:
         self.scheduler = CogVideoXDPMScheduler.from_pretrained(model_name, subfolder="scheduler")
 
         # load weights
-        state_dict = torch.load(ckpt_dir, map_location="cpu")
-        # If keys have 'module.' prefix (from DistributedDataParallel)
-        state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
-        self.transformer.load_state_dict(state_dict)
+        # state_dict = torch.load(ckpt_dir, map_location="cpu")
+        # # If keys have 'module.' prefix (from DistributedDataParallel)
+        # state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+        # self.transformer.load_state_dict(state_dict)
+        load_state_dict_from_zero_checkpoint(self.transformer, ckpt_dir)
+        print(f"Loaded checkpoint from {ckpt_dir}")
 
         self.pipe = self.pipeline_cls(
             tokenizer=self.tokenizer,
@@ -362,11 +366,15 @@ class LoraEvaluator:
         for idx, videos in enumerate(video_generate):
             filename = f"{save_dir}/video_{idx}.mp4"
             print(f"Saving video to {filename}")
+
+            # resize the video to 480 x 480
+            videos = [img.resize((480, 480)) for img in videos]
+
             export_to_video(videos, filename, fps=5)
 
 
 if __name__ == "__main__":
-    ckpt = "training_logs/checkpoint-3000/pytorch_model.bin"
+    ckpt = "training_logs/checkpoint-3000/"
     config_path = "config/v1.yaml"
     model_name = "THUDM/CogVideoX-5B-I2V"
     data_dir = "/gpfs/u/scratch/LMCG/LMCGhazh/enroot/rlbench_data/root/RACER-DataGen/racer_datagen/rlbench_videos/test"
