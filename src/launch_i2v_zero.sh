@@ -5,7 +5,7 @@ export TOKENIZERS_PARALLELISM=false
 
 # Initialize argument arrays
 DEBUG_ARG=()
-CONFIG_ARG=(--config "config/v1.yaml")
+CONFIG_ARG=(--config "config/v2.yaml")
 
 # Process command line arguments
 while [[ $# -gt 0 ]]; do
