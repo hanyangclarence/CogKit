@@ -11,6 +11,7 @@ from typing_extensions import override
 
 from cogkit.datasets import I2VDatasetWithResize, T2IDatasetWithResize, T2VDatasetWithResize
 from cogkit.finetune.base import BaseTrainer
+from cogkit.utils.utils import instantiate_from_config, get_obj_from_str
 from diffusers.pipelines import DiffusionPipeline
 from diffusers.utils.export_utils import export_to_video
 from omegaconf import OmegaConf
@@ -54,33 +55,26 @@ class DiffusionTrainer(BaseTrainer):
 
     @override
     def prepare_dataset(self) -> None:
-        # TODO: refactor later
-        match self.args.model_type:
-            case "i2v":
-                dataset_cls = I2VDatasetWithResize
-            case "t2v":
-                dataset_cls = T2VDatasetWithResize
-            case "t2i":
-                dataset_cls = T2IDatasetWithResize
-            case _:
-                raise ValueError(f"Invalid model type: {self.args.model_type}")
+        self.additional_configs = OmegaConf.load(self.args.config)
+        
+        dataset_cls = get_obj_from_str(self.additional_configs["dataset"]["target"])
 
         additional_args = {
             "device": self.accelerator.device,
             "trainer": self,
         }
-        self.additional_configs = OmegaConf.load(self.args.config)
+        self.args.data_root = self.additional_configs["dataset"]["data_root"]
         self.train_dataset = dataset_cls(
             **(self.args.model_dump()),
             **additional_args,
-            **self.additional_configs["dataset"],
+            **self.additional_configs["dataset"]["params"],
             using_train=True,
         )
         if self.args.do_validation:
             self.test_dataset = dataset_cls(
                 **(self.args.model_dump()),
                 **additional_args,
-                **self.additional_configs["dataset"],
+                **self.additional_configs["dataset"]["params"],
                 using_train=False,
             )
 

@@ -66,11 +66,14 @@ class BaseI2VDataset(Dataset):
         self.data_root = self.data_root / "train" if using_train else self.data_root / "test"
         metadata_path = self.data_root / "metadata.jsonl"
         video_path = self.data_root / "videos"
+        depth_path = self.data_root / "depth"
 
         metadata = load_dataset("json", data_files=str(metadata_path), split="train")
         video_data = load_dataset("videofolder", data_dir=video_path, split="train")
+        depth_data = load_dataset("videofolder", data_dir=str(depth_path), split="train")
         metadata = metadata.sort("id")
         video_data = video_data.sort("id")
+        depth_data = depth_data.sort("id")
 
         def update_with_prompt(video_example, idx):
             video_example["prompt"] = metadata[idx]["prompt"]
@@ -89,6 +92,25 @@ class BaseI2VDataset(Dataset):
             return video_example
 
         video_data = video_data.map(update_with_trajectory, with_indices=True)
+        
+        def extract_first_depth(example):
+            assert len(example["video"]) == 1
+            depth_video: VideoReader = example["video"][0]
+            first_depth = next(depth_video)["data"]
+            to_pil = transforms.ToPILImage()
+            # Save the extracted depth frame under a new key.
+            example["depth"] = [to_pil(first_depth)]
+            example["video"] = [None]  # Remove the video data
+            return example
+        
+        depth_data = depth_data.with_transform(extract_first_depth)
+        
+        # Merge the video and depth datasets
+        def add_depth(example, idx):
+            example["depth"] = depth_data[idx]["depth"]
+            return example
+        
+        video_data = video_data.map(add_depth, with_indices=True)
 
         logger.warning(
             f"No image data found in {self.data_root}, using first frame of video instead"
@@ -105,7 +127,7 @@ class BaseI2VDataset(Dataset):
                 # remove the video data for test set
                 example["video"] = [None]
             return example
-
+        
         self.data = video_data.with_transform(add_first_frame)
 
 
@@ -135,6 +157,11 @@ class BaseI2VDataset(Dataset):
         image_preprocessed = self.image_transform(image_preprocessed)
         image_preprocessed = image_preprocessed.to("cpu")
         # shape of image: [C, H, W]
+        
+        ##### depth
+        depth_original: Image.Image = self.data[index]["depth"]
+        depth_preprocessed = self.preprocess_depth(depth_original)  ## shape of depth: [C, H, W]
+        depth_preprocessed = depth_preprocessed.to("cpu")
 
         if not self.using_train:
             return {
@@ -143,6 +170,7 @@ class BaseI2VDataset(Dataset):
                 "prompt": prompt,
                 "prompt_embedding": prompt_embedding,
                 "trajectory": trajectory,
+                "depth": depth_preprocessed,
             }
 
         ##### video
@@ -188,6 +216,7 @@ class BaseI2VDataset(Dataset):
             "video": video,
             "encoded_video": encoded_video,
             "trajectory": trajectory,
+            "depth": depth_preprocessed,
         }
 
     def preprocess(
@@ -245,6 +274,9 @@ class BaseI2VDataset(Dataset):
             torch.Tensor: The transformed image tensor
         """
         raise NotImplementedError("Subclass must implement this method")
+    
+    def preprocess_depth(self, depth: Image.Image) -> torch.Tensor:
+        raise NotImplementedError("Subclass must implement this method")
 
 
 class I2VDatasetWithResize(BaseI2VDataset):
@@ -300,3 +332,12 @@ class I2VDatasetWithResize(BaseI2VDataset):
     @override
     def image_transform(self, image: torch.Tensor) -> torch.Tensor:
         return self.__image_transforms(image)
+    
+    @override
+    def preprocess_depth(self, depth: Image.Image) -> torch.Tensor:
+        depth = depth.resize((self.width, self.height), Image.Resampling.BILINEAR)
+        depth = torch.from_numpy(np.array(depth)).permute(2, 0, 1).float().contiguous()
+        
+        assert depth.shape == (3, self.height, self.width)  # Depth is 3 channels (H, W), each channel the same value
+        # currently treat depth as RGB image, so also 0-255 values
+        return self.image_transform(depth)  # scale to [-1, 1] as well

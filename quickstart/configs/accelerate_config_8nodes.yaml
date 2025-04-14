@@ -15,10 +15,11 @@ deepspeed_config:
 
 downcast_bf16: 'no'
 enable_cpu_affinity: false
-# machine_rank: 0
+machine_rank: ${SLURM_NODEID}
 main_training_function: main
 num_machines: 8
 rdzv_backend: static
+# rdzv_endpoint: "head-node-ip:29500"
 same_network: true
 tpu_env: []
 tpu_use_cluster: false

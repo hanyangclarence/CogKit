@@ -11,4 +11,7 @@
 source /gpfs/u/home/LMCG/LMCGhazh/scratch/miniconda3x86/etc/profile.d/conda.sh
 conda activate cogvideo
 
+export MASTER_ADDR=$(scontrol show hostname $SLURM_JOB_NODELIST | head -n 1)
+export MASTER_PORT=29500
+
 bash launch_i2v_zero_8nodes.sh

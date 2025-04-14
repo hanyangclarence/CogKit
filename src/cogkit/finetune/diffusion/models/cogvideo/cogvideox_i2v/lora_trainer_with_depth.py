@@ -20,7 +20,7 @@ from cogkit.finetune import register
 from cogkit.finetune.diffusion.schemas import DiffusionComponents, TrainableModel
 from cogkit.finetune.diffusion.trainer import DiffusionTrainer
 from cogkit.finetune.utils import unwrap_model
-from cogkit.utils.utils import instantiate_from_config
+from cogkit.utils.utils import instantiate_from_config, get_obj_from_str
 
 
 class CogVideoXI2VLoraTrainer(DiffusionTrainer):
@@ -53,6 +53,12 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         components.scheduler = CogVideoXDPMScheduler.from_pretrained(
             model_path, subfolder="scheduler"
         )
+        
+        # if needed, modify the parameters of the pretrained model
+        modify_model_config = self.additional_configs.get("modify_model", None)
+        if modify_model_config is not None:
+            modify_fn = get_obj_from_str(modify_model_config["target"])
+            components = modify_fn(components)
 
         return components
 
@@ -104,6 +110,7 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
             "image_preprocessed": [],
             "encoded_videos": [],
             "trajectory": [],
+            "depth": [],
         }
 
         for sample in samples:
@@ -113,6 +120,7 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
             image_preprocessed = sample["image_preprocessed"]
             encoded_video = sample.get("encoded_video", None)
             trajectory = sample["trajectory"]
+            depth = sample["depth"]
 
             ret["prompt"].append(prompt)
             ret["prompt_embedding"].append(prompt_embedding)
@@ -121,6 +129,7 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
             if encoded_video is not None:
                 ret["encoded_videos"].append(encoded_video)
             ret["trajectory"].append(trajectory)
+            ret["depth"].append(depth)
 
         ret["prompt_embedding"] = torch.stack(ret["prompt_embedding"])
         ret["image_preprocessed"] = torch.stack(ret["image_preprocessed"])
@@ -128,6 +137,7 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
             torch.stack(ret["encoded_videos"]) if ret["encoded_videos"] else None
         )
         ret["trajectory"] = torch.stack(ret["trajectory"])
+        ret["depth"] = torch.stack(ret["depth"])
 
         return ret
 
@@ -136,11 +146,13 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         prompt_embedding = batch["prompt_embedding"]
         latent = batch["encoded_videos"]
         images = batch["image_preprocessed"]
+        depths = batch["depth"]
         trajectory = batch["trajectory"]
 
         # Shape of prompt_embedding: [B, seq_len, hidden_size]
         # Shape of latent: [B, C, F, H, W]
         # Shape of images: [B, C, H, W]
+        # Shape of depth: [B, C, H, W]
         # Shape of trajectory: [B, seq_len, 8]
 
         patch_size_t = self.state.transformer_config.patch_size_t
@@ -202,13 +214,27 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         )
         latent_padding = image_latents.new_zeros(padding_shape)
         image_latents = torch.cat([image_latents, latent_padding], dim=1)
+        
+        # Do the same for depth, just without adding noise
+        depths = depths.unsqueeze(2)
+        depth_latent_dist = self.components.vae.encode(
+            depths.to(dtype=self.components.vae.dtype)
+        ).latent_dist
+        depth_latents = depth_latent_dist.sample() * self.components.vae.config.scaling_factor
+        depth_latents = depth_latents.permute(0, 2, 1, 3, 4)
+        assert (latent.shape[0], *latent.shape[2:]) == (
+            depth_latents.shape[0], *depth_latents.shape[2:]
+        )
+        # Padding depth_latents to the same frame number as latent
+        latent_padding = depth_latents.new_zeros(padding_shape)
+        depth_latents = torch.cat([depth_latents, latent_padding], dim=1)
 
         # Add noise to latent
         noise = torch.randn_like(latent)
         latent_noisy = self.components.scheduler.add_noise(latent, noise, timesteps)
 
-        # Concatenate latent and image_latents in the channel dimension
-        latent_img_noisy = torch.cat([latent_noisy, image_latents], dim=2)
+        # Concatenate latent image_latents, and depth_latents in the channel dimension
+        latent_img_noisy = torch.cat([latent_noisy, image_latents, depth_latents], dim=2)
 
         # Prepare rotary embeds
         vae_scale_factor_spatial = 2 ** (len(self.components.vae.config.block_out_channels) - 1)
@@ -321,4 +347,4 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         return freqs_cos, freqs_sin
 
 
-register("cogvideox-i2v", "lora", CogVideoXI2VLoraTrainer)
+# register("cogvideox-i2v", "lora", CogVideoXI2VLoraTrainer)

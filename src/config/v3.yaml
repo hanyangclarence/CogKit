@@ -1,0 +1,28 @@
+# This version is from v2
+# loads the depth map as conditioning
+
+trainer_class: cogkit.finetune.diffusion.models.cogvideo.cogvideox_i2v.lora_trainer_with_depth.CogVideoXI2VLoraTrainer
+
+trajectory_encoder:
+  target: cogkit.finetune.modules.trajectory_encoder.TrajectoryEncoder
+  params:
+    input_dim: 8
+    d_model: 4096
+    nhead: 8
+    num_layers: 2
+    target_traj_len: 226
+
+trajectory_fuser:
+  target: cogkit.finetune.modules.fuser.AdditionFuser
+  params:
+    empty: true
+
+dataset:
+  target: cogkit.datasets.i2v_dataset_with_depth.I2VDatasetWithResize
+  data_root: /gpfs/u/scratch/LMCG/LMCGhazh/enroot/rlbench_data/root/RACER-DataGen/racer_datagen/rlbench_videos_with_depth
+  params:
+    target_traj_length: 226
+    get_traj_fn_name: "cogkit.datasets.get_traj_functions.get_traj_from_obs"
+
+modify_model:
+  target: cogkit.finetune.utils.modify_model_utils.modify_in_conv

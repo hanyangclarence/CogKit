@@ -37,7 +37,7 @@ OUTPUT_ARGS=(
 
 # Data Configuration
 DATA_ARGS=(
-    --data_root "/gpfs/u/scratch/LMCG/LMCGhazh/enroot/rlbench_data/root/RACER-DataGen/racer_datagen/rlbench_videos"
+    --data_root "no_use"
 
     # Note:
     #  for CogVideoX series models, number of training frames should be **8N+1**
@@ -84,7 +84,17 @@ VALIDATION_ARGS=(
 export MACHINE_RANK=${SLURM_NODEID}
 
 # Combine all arguments and launch training
-accelerate launch --config_file ../quickstart/configs/accelerate_config_8nodes.yaml train.py \
+echo "--- Starting Accelerate Launch ---"
+echo "Master Address: ${MASTER_ADDR}"
+echo "Master Port: ${MASTER_PORT}"
+echo "SLURM Node List: ${SLURM_NODELIST}"
+echo "SLURM Job ID: ${SLURM_JOB_ID}"
+echo "SLURM Proc ID: ${SLURM_PROCID}" # Should be set by SLURM for each process
+echo "SLURM NTASKS: ${SLURM_NTASKS}"   # Should be 64
+echo "------------------------------------"
+
+# Combine all arguments and launch training
+accelerate launch --config_file ../quickstart/configs/accelerate_config_8nodes.yaml --main_process_ip $MASTER_ADDR --main_process_port $MASTER_PORT train.py \
     "${MODEL_ARGS[@]}" \
     "${OUTPUT_ARGS[@]}" \
     "${DATA_ARGS[@]}" \
