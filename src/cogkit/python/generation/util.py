@@ -116,25 +116,26 @@ def guess_resolution():
 #     raise ValueError(err_msg)
 
 
-# def guess_frames(pipeline: TVideoPipeline, frames: int | None = None) -> tuple[int, int]:
-#     if frames is None:
-#         frames = pipeline.transformer.config.sample_frames
+def guess_frames(pipeline: TVideoPipeline, frames: int | None = None) -> tuple[int, int]:
+    pass
+    # if frames is None:
+    #     frames = pipeline.transformer.config.sample_frames
 
-#     ##### Check frames according to model card
-#     if _is_cogvideox1_0(pipeline):
-#         assert frames <= 49, "frames must <=49"
-#         assert (frames - 1) % 8 == 0, "frames must be 8N+1"
-#         fps = 8
-#     elif _is_cogvideox1_5(pipeline):
-#         assert frames <= 81, "frames must <=81"
-#         assert (frames - 1) % 16 == 0, "frames must be 16N+1"
-#         fps = 16
-#     else:
-#         raise ValueError(
-#             f"Unsupported pipeline type in `guess_frames`, pipeline type: {type(pipeline)}"
-#         )
+    # ##### Check frames according to model card
+    # if _is_cogvideox1_0(pipeline):
+    #     assert frames <= 49, "frames must <=49"
+    #     assert (frames - 1) % 8 == 0, "frames must be 8N+1"
+    #     fps = 8
+    # elif _is_cogvideox1_5(pipeline):
+    #     assert frames <= 81, "frames must <=81"
+    #     assert (frames - 1) % 16 == 0, "frames must be 16N+1"
+    #     fps = 16
+    # else:
+    #     raise ValueError(
+    #         f"Unsupported pipeline type in `guess_frames`, pipeline type: {type(pipeline)}"
+    #     )
 
-#     return frames, fps
+    # return frames, fps
 
 
 def before_generation():
