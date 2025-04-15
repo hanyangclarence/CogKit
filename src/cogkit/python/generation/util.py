@@ -40,7 +40,7 @@ def _is_cogvideox1_5(pipeline: TVideoPipeline) -> bool:
     )
 
 
-# def _guess_cogview_resolution(
+def _guess_cogview_resolution():
 #     pipeline: CogView4Pipeline, height: int | None = None, width: int | None = None
 # ) -> tuple[int, int]:
 #     default_height = pipeline.transformer.config.sample_size * pipeline.vae_scale_factor
@@ -63,6 +63,7 @@ def _is_cogvideox1_5(pipeline: TVideoPipeline) -> bool:
 #     raise ValueError(
 #         f"Unsupported pipeline type in `_guess_cogview_resolution`, pipeline type: {type(pipeline)}"
 #     )
+    pass
 
 
 def _guess_cogvideox_resolution(
@@ -100,7 +101,8 @@ def _guess_cogvideox_resolution(
     return height, width
 
 
-# def guess_resolution(
+def guess_resolution():
+    pass
 #     pipeline: TPipeline,
 #     height: int | None = None,
 #     width: int | None = None,
@@ -135,7 +137,8 @@ def _guess_cogvideox_resolution(
 #     return frames, fps
 
 
-# def before_generation(
+def before_generation():
+    pass
 #     pipeline: TPipeline,
 #     load_type: Literal["cuda", "cpu_model_offload", "sequential_cpu_offload"] = "cpu_model_offload",
 # ) -> None:
