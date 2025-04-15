@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 
-from diffusers.loaders import CogVideoXLoraLoaderMixin, CogView4LoraLoaderMixin
+from diffusers.loaders import CogVideoXLoraLoaderMixin
 
 
 def load_lora_checkpoint(
-    pipeline: CogVideoXLoraLoaderMixin | CogView4LoraLoaderMixin,
+    pipeline: CogVideoXLoraLoaderMixin,
     lora_model_id_or_path: str,
     lora_scale: float = 1.0,
 ) -> None:
@@ -14,6 +14,6 @@ def load_lora_checkpoint(
 
 
 def unload_lora_checkpoint(
-    pipeline: CogVideoXLoraLoaderMixin | CogView4LoraLoaderMixin,
+    pipeline: CogVideoXLoraLoaderMixin,
 ) -> None:
     pipeline.unload_lora_weights()

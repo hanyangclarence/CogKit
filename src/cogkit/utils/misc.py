@@ -11,10 +11,10 @@ _logger = get_logger(__name__)
 
 _SUPPORTED_PIPELINE = (
     "CogView3PlusPipeline",
-    "CogView4Pipeline",
+    # "CogView4Pipeline",
     "CogVideoXPipeline",
     "CogVideoXImageToVideoPipeline",
-    "CogView4ControlPipeline",
+    # "CogView4ControlPipeline",
 )
 
 
