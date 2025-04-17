@@ -84,8 +84,8 @@ if __name__ == "__main__":
         
         # parse filename to get task name
         filename = video_path_data[idx]
-        filename = filename.split("perburb")[0] if "perburb" in filename else filename.split("expert")[0]
-        filename = "_".join(filename.split("_")[:-2])
+        filename = filename.split("perturb")[0] if "perturb" in filename else filename.split("expert")[0]
+        filename = "_".join(filename.split("_")[:-3])
         if filename not in task_list:
             print(f"Task {filename} not in task list, skipping...")
             continue
@@ -106,6 +106,7 @@ if __name__ == "__main__":
         evaluator.generate(
             prompt=prompt,
             image=first_frame,
+            depth=first_frame_depth,
             trajectory=trajectory,
             save_dir=f"{save_dir}/{idx}",
         )

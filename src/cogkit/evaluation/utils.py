@@ -2,6 +2,14 @@ import torch
 
 from diffusers import CogVideoXDPMScheduler
 from diffusers.pipelines.cogvideo.pipeline_cogvideox_image2video import *
+from diffusers.utils import is_torch_xla_available
+
+if is_torch_xla_available():
+    import torch_xla.core.xla_model as xm
+
+    XLA_AVAILABLE = True
+else:
+    XLA_AVAILABLE = False
 
 
 def call(

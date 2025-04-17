@@ -217,8 +217,15 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         
         # Do the same for depth, just without adding noise
         depths = depths.unsqueeze(2)
+        depth_noise_sigma = torch.normal(
+            mean=-3.0, std=0.5, size=(1,), device=self.accelerator.device
+        )
+        depth_noise_sigma = torch.exp(depth_noise_sigma).to(dtype=depths.dtype)
+        noisy_depths = (
+            depths + torch.randn_like(depths) * depth_noise_sigma[:, None, None, None, None]
+        )
         depth_latent_dist = self.components.vae.encode(
-            depths.to(dtype=self.components.vae.dtype)
+            noisy_depths.to(dtype=self.components.vae.dtype)
         ).latent_dist
         depth_latents = depth_latent_dist.sample() * self.components.vae.config.scaling_factor
         depth_latents = depth_latents.permute(0, 2, 1, 3, 4)

@@ -19,7 +19,7 @@ from cogkit.finetune.diffusion.schemas import TrainableModel
 from cogkit.utils.utils import instantiate_from_config, get_obj_from_str
 from cogkit.datasets.utils import preprocess_image_with_resize
 from cogkit.finetune.diffusion.schemas.components import TrainableModel
-from cogkit.evaluation.utils import call
+from cogkit.evaluation.utils import call_with_depth
 from deepspeed.utils.zero_to_fp32 import load_state_dict_from_zero_checkpoint
 
 
@@ -95,7 +95,7 @@ class Evaluator:
         return prompt_embedding
     
     def preprocess_depth(self, depth: Image.Image) -> torch.Tensor:
-        depth = depth.resize((self.resolution[1], self.resolution[2]), Image.Resampling.BILINEAR)
+        depth = depth.resize((self.resolution[2], self.resolution[1]), Image.Resampling.BILINEAR)
         depth = torch.from_numpy(np.array(depth)).permute(2, 0, 1).float().contiguous()
         
         assert depth.shape == (3, self.resolution[1], self.resolution[2])
@@ -125,13 +125,14 @@ class Evaluator:
         prompt_embedding = self.transformer.fuse_trajectory(prompt_embedding, traj_embedding)
 
         generator = torch.Generator(device=self.device)
-        video_generate = call(
+        video_generate = call_with_depth(
             self.pipe,
             num_frames=self.resolution[0],
             height=self.resolution[1],
             width=self.resolution[2],
             prompt_embeds=prompt_embedding,
             image=image,
+            depth=depth,
             generator=generator,
         ).frames
 
