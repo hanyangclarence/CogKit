@@ -26,3 +26,7 @@ dataset:
 
 modify_model:
   target: cogkit.finetune.utils.modify_model_utils.modify_in_conv
+
+evaluation:
+  lora_evaluator: None
+  zero_evaluator: cogkit.evaluation.evaluator_zero_v3.Evaluator

@@ -22,4 +22,7 @@ dataset:
     target_traj_length: 226
     get_traj_fn_name: "cogkit.datasets.get_traj_functions.get_joints"
 
+evaluation:
+  lora_evaluator: cogkit.evaluation.evaluator_lora_v1.Evaluator
+  zero_evaluator: cogkit.evaluation.evaluator_zero_v1.Evaluator
 
