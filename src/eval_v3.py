@@ -76,7 +76,7 @@ if __name__ == "__main__":
     depth_path_data = {data["id"]: data["file_name"] for data in depth_path_data}
     
     target_traj_length = config["trajectory_encoder"]["params"]["target_traj_len"]
-    get_traj_fn = get_obj_from_str(config["dataset"]["get_traj_fn_name"])
+    get_traj_fn = get_obj_from_str(config["dataset"]["params"]["get_traj_fn_name"])
     
     for data in test_data:
         idx = data["id"]
