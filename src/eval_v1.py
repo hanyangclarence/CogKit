@@ -9,6 +9,27 @@ from decord import cpu
 
 from cogkit.utils.utils import get_obj_from_str
 
+task_list = [
+    "put_item_in_drawer",             # 0                 
+    "reach_and_drag",                 # 1                 
+    "turn_tap",                       # 2  --> [0:3]      
+    "slide_block_to_color_target",    # 3                 
+    "open_drawer",                    # 4                 
+    "put_groceries_in_cupboard",      # 5  --> [3:6]      
+    "place_shape_in_shape_sorter",    # 6                 
+    "put_money_in_safe",              # 7                 
+    "push_buttons",                   # 8  --> [6:9]      
+    "close_jar",                      # 9                 
+    "stack_blocks",                   # 10                
+    "place_cups",                     # 11 --> [9:12]     
+    "place_wine_at_rack_location",    # 12                
+    "light_bulb_in",                  # 13                
+    "sweep_to_dustpan_of_size",       # 14 --> [12:15]    
+    "insert_onto_square_peg",         # 15                
+    "meat_off_grill",                 # 16                
+    "stack_cups",                     # 17 --> [15:18]
+]
+
 # This version evaluates the model that conditioned on trajectory and first frame
 
 
@@ -54,6 +75,14 @@ if __name__ == "__main__":
     for data in test_data:
         idx = data["id"]
         prompt = data["prompt"]
+        
+        # parse filename to get task name
+        filename = video_path_data[idx]
+        filename = filename.split("perburb")[0] if "perburb" in filename else filename.split("expert")[0]
+        filename = "_".join(filename.split("_")[:-2])
+        if filename not in task_list:
+            print(f"Task {filename} not in task list, skipping...")
+            continue
         
         traj_path = data["trajectory"]
         demo = pickle.load(open(f"{data_dir}/trajectories/{traj_path}", "rb"))
