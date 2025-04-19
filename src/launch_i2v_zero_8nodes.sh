@@ -31,7 +31,7 @@ MODEL_ARGS=(
 
 # Output Configuration
 OUTPUT_ARGS=(
-    --output_dir "training_logs_zero_8nodes"
+    --output_dir "training_logs_zero_8nodes_v3"
     --report_to "tensorboard"
 )
 
@@ -53,7 +53,7 @@ TRAIN_ARGS=(
     --learning_rate 2e-5
 
     #########   Please keep consistent with deepspeed config file ##########
-    --batch_size 1
+    --batch_size 0.5
     --gradient_accumulation_steps 1
     --mixed_precision "fp16"  # ["no", "fp16"]  Note: CogVideoX-2B only supports fp16 training
     ########################################################################
