@@ -480,7 +480,8 @@ def call_with_depth(
         video = model.video_processor.postprocess_video(video=video, output_type=output_type)
         
         # move back
-        model.vae.to(dtype=torch.float16, device=model._execution_device)
+        model.to(torch.float16)
+        model.to(model._execution_device)
     else:
         video = latents
 

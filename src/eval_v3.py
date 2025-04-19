@@ -102,12 +102,12 @@ if __name__ == "__main__":
         depth_vr = VideoReader(depth_path, ctx=cpu(0))
         first_frame_depth = Image.fromarray(depth_vr[0].asnumpy())
         
-        os.makedirs(f"{save_dir}/{idx}", exist_ok=True)
+        os.makedirs(f"{save_dir}/{idx}_{filename}", exist_ok=True)
         evaluator.generate(
             prompt=prompt,
             image=first_frame,
             depth=first_frame_depth,
             trajectory=trajectory,
-            save_dir=f"{save_dir}/{idx}",
+            save_dir=f"{save_dir}/{idx}_{filename}",
         )
         print(f"Generated video for {idx}: {prompt}")

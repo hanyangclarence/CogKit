@@ -92,11 +92,11 @@ if __name__ == "__main__":
         vr = VideoReader(video_path, ctx=cpu(0))
         first_frame = Image.fromarray(vr[0].asnumpy())
         
-        os.makedirs(f"{save_dir}/{idx}", exist_ok=True)
+        os.makedirs(f"{save_dir}/{idx}_{filename}", exist_ok=True)
         evaluator.generate(
             prompt=prompt,
             image=first_frame,
             trajectory=trajectory,
-            save_dir=f"{save_dir}/{idx}",
+            save_dir=f"{save_dir}/{idx}_{filename}",
         )
         print(f"Generated video for {idx}: {prompt}")
