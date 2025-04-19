@@ -112,12 +112,16 @@ if __name__ == "__main__":
         depth_vr = VideoReader(depth_path, ctx=cpu(0))
         first_frame_depth = Image.fromarray(depth_vr[0].asnumpy())
         
-        os.makedirs(f"{save_dir}/{idx}_{video_path_data[idx]}", exist_ok=True)
+        video_save_dir = os.path.join(save_dir, video_path_data[idx].split(".")[0])
+        os.makedirs(video_save_dir, exist_ok=True)
         evaluator.generate(
             prompt=prompt,
             image=first_frame,
             depth=first_frame_depth,
             trajectory=trajectory,
-            save_dir=f"{save_dir}/{idx}_{video_path_data[idx]}",
+            save_dir=video_save_dir,
         )
         print(f"Generated video for {idx}: {prompt}")
+        
+        # also, create a link to the ground truth video in the save directory
+        os.system(f"ln -s {video_path} {video_save_dir}/ground_truth.mp4")
