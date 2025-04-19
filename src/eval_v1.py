@@ -6,6 +6,7 @@ import os
 import argparse
 from decord import VideoReader
 from decord import cpu
+import random
 
 from cogkit.utils.utils import get_obj_from_str
 
@@ -37,6 +38,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--ckpt", type=str, default="")
     parser.add_argument("--config", type=str, default="")
+    parser.add_argument("--max_num_per_task", type=int, default=5)
     args = parser.parse_args()
     
     ckpt = args.ckpt
@@ -45,6 +47,7 @@ if __name__ == "__main__":
     data_dir = "/gpfs/u/scratch/LMCG/LMCGhazh/enroot/rlbench_data/root/RACER-DataGen/racer_datagen/rlbench_videos/test"
     save_dir = "generated_videos"
     use_lora = False
+    max_num_per_task = args.max_num_per_task
     
     # Create the save directory
     os.makedirs(save_dir, exist_ok=True)
@@ -72,6 +75,11 @@ if __name__ == "__main__":
     video_path_data = {data["id"]: data["file_name"] for data in video_path_data}
     target_traj_length = config["trajectory_encoder"]["params"]["target_traj_len"]
     get_traj_fn = get_obj_from_str(config["dataset"]["params"]["get_traj_fn_name"])
+    
+    random.seed(0)
+    random.shuffle(test_data)
+    task_num_count = {task: 0 for task in task_list}
+    
     for data in test_data:
         idx = data["id"]
         prompt = data["prompt"]
@@ -83,6 +91,10 @@ if __name__ == "__main__":
         if filename not in task_list:
             print(f"Task {filename} not in task list, skipping...")
             continue
+        if task_num_count[filename] >= max_num_per_task:
+            print(f"Task {filename} already has {max_num_per_task} samples, skipping...")
+            continue
+        task_num_count[filename] += 1
         
         traj_path = data["trajectory"]
         demo = pickle.load(open(f"{data_dir}/trajectories/{traj_path}", "rb"))
@@ -92,11 +104,11 @@ if __name__ == "__main__":
         vr = VideoReader(video_path, ctx=cpu(0))
         first_frame = Image.fromarray(vr[0].asnumpy())
         
-        os.makedirs(f"{save_dir}/{idx}_{filename}", exist_ok=True)
+        os.makedirs(f"{save_dir}/{idx}_{video_path_data[idx]}", exist_ok=True)
         evaluator.generate(
             prompt=prompt,
             image=first_frame,
             trajectory=trajectory,
-            save_dir=f"{save_dir}/{idx}_{filename}",
+            save_dir=f"{save_dir}/{idx}_{video_path_data[idx]}",
         )
         print(f"Generated video for {idx}: {prompt}")
