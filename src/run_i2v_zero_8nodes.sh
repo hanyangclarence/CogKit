@@ -84,7 +84,7 @@ SYSTEM_ARGS=(
 
 # Checkpointing Configuration
 CHECKPOINT_ARGS=(
-    --checkpointing_steps 300 # save checkpoint every x steps
+    --checkpointing_steps 100 # save checkpoint every x steps
     --checkpointing_limit 1 # maximum number of checkpoints to keep, after which the oldest one is deleted
     # --resume_from_checkpoint "/absolute/path/to/checkpoint_dir"  # if you want to resume from a checkpoint
 )
@@ -113,18 +113,15 @@ echo "LOCAL_RANK: ${LOCAL_RANK}" >> "slurm_output/env_variables_${GLOBAL_RANK}.t
 echo "GLOBAL_RANK: ${GLOBAL_RANK}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
 echo "------------------------------------" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
 
-export LAUNCHER = "accelerate launch \
-    --config_file ../quickstart/configs/accelerate_config_8nodes.yaml \
-    --num_processes $((SLURM_NNODES * GPUS_PER_NODE)) \ 
-    --num_machines $SLURM_NNODES \
+export LAUNCHER="accelerate launch --config_file ../quickstart/configs/accelerate_config_8nodes.yaml --num_processes $((SLURM_NNODES * GPUS_PER_NODE)) --num_machines $SLURM_NNODES \
     --rdzv_backend c10d \
     --main_process_ip $MASTER_ADDR \
     --main_process_port $MASTER_PORT \
 "
 
-export SCRIPT = "train.py"
+export SCRIPT="train.py"
 
-export ARGS = " \
+export ARGS=" \
     ${MODEL_ARGS[@]} \
     ${OUTPUT_ARGS[@]} \
     ${DATA_ARGS[@]} \
@@ -136,6 +133,8 @@ export ARGS = " \
     ${CONFIG_ARG[@]} \
 "
 
-export CMD = "$LAUNCHER $SCRIPT $ARGS"
+export CMD="$LAUNCHER $SCRIPT $ARGS"
 
-srun $CMD
+echo $CMD >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
+
+$CMD
