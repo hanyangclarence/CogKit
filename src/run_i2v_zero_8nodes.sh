@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 #SBATCH --job-name=yh
 #SBATCH -o slurm_output/i2v_zero_8nodes_%j.out
@@ -19,9 +19,11 @@ export GPUS_PER_NODE=8
 # Prevent tokenizer parallelism issues
 export TOKENIZERS_PARALLELISM=false
 
-# Initialize argument arrays
+# Initialize argument variables
 DEBUG_ARG=()
-CONFIG_ARG=(--config "config/v3.yaml")
+CONFIG_FILE=""
+OUTPUT_DIR=""
+RESUME_CHECKPOINT=""
 
 # Process command line arguments
 while [[ $# -gt 0 ]]; do
@@ -30,12 +32,37 @@ while [[ $# -gt 0 ]]; do
             DEBUG_ARG=(--debug)
             shift
             ;;
+        --config)
+            CONFIG_FILE="$2"
+            shift 2
+            ;;
+        --output_dir)
+            OUTPUT_DIR="$2"
+            shift 2
+            ;;
+        --resume_from_checkpoint)
+            RESUME_CHECKPOINT="$2"
+            shift 2
+            ;;
         *)
             echo "Error: Unknown argument: $1"
             exit 1
             ;;
     esac
 done
+
+# Check for required arguments
+if [[ -z "$CONFIG_FILE" ]]; then
+    echo "Error: --config argument is required."
+    exit 1
+fi
+if [[ -z "$OUTPUT_DIR" ]]; then
+    echo "Error: --output_dir argument is required."
+    exit 1
+fi
+
+# Set config argument
+CONFIG_ARG=(--config "$CONFIG_FILE")
 
 # Model Configuration
 MODEL_ARGS=(
@@ -47,7 +74,7 @@ MODEL_ARGS=(
 
 # Output Configuration
 OUTPUT_ARGS=(
-    --output_dir "training_logs_zero_8nodes_v3"
+    --output_dir "$OUTPUT_DIR"
     --report_to "tensorboard"
 )
 
@@ -86,8 +113,11 @@ SYSTEM_ARGS=(
 CHECKPOINT_ARGS=(
     --checkpointing_steps 100 # save checkpoint every x steps
     --checkpointing_limit 1 # maximum number of checkpoints to keep, after which the oldest one is deleted
-    # --resume_from_checkpoint "/absolute/path/to/checkpoint_dir"  # if you want to resume from a checkpoint
 )
+# Add resume_from_checkpoint if provided
+if [[ -n "$RESUME_CHECKPOINT" ]]; then
+    CHECKPOINT_ARGS+=(--resume_from_checkpoint "$RESUME_CHECKPOINT")
+fi
 
 # Validation Configuration
 VALIDATION_ARGS=(
@@ -111,6 +141,10 @@ echo "SLURM NNODES: ${SLURM_NNODES}" >> "slurm_output/env_variables_${GLOBAL_RAN
 echo "SLURM GPU_PER_NODE: ${GPUS_PER_NODE}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
 echo "LOCAL_RANK: ${LOCAL_RANK}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
 echo "GLOBAL_RANK: ${GLOBAL_RANK}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
+echo "------------------------------------" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
+echo "CONFIG_FILE: ${CONFIG_FILE}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
+echo "OUTPUT_DIR: ${OUTPUT_DIR}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
+echo "RESUME_CHECKPOINT: ${RESUME_CHECKPOINT}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
 echo "------------------------------------" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
 
 export LAUNCHER="accelerate launch --config_file ../quickstart/configs/accelerate_config_8nodes.yaml --num_processes $((SLURM_NNODES * GPUS_PER_NODE)) --num_machines $SLURM_NNODES \
