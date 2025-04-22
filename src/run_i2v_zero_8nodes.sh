@@ -5,7 +5,8 @@
 #SBATCH -e slurm_output/i2v_zero_8nodes_%j.err
 #SBATCH --mem=400G
 #SBATCH --nodes=8
-#SBATCH --ntasks-per-node=1  # total number of tasks across all nodes
+#SBATCH --ntasks-per-node=8  # total number of tasks across all nodes
+#SBATCH --gpus-per-task=1
 #SBATCH --time=06:00:00
 #SBATCH --gres=gpu:8
 
@@ -138,6 +139,9 @@ echo "SLURM Job ID: ${SLURM_JOB_ID}" >> "slurm_output/env_variables_${GLOBAL_RAN
 echo "SLURM Proc ID: ${SLURM_PROCID}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt" # Should be set by SLURM for each process
 echo "SLURM NTASKS: ${SLURM_NTASKS}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"   # Should be 64
 echo "SLURM NNODES: ${SLURM_NNODES}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
+echo "hostname: $(hostname)" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
+echo "SLURM_TASKS_PER_NODE: ${SLURM_TASKS_PER_NODE}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
+echo "SLURM_NODEID: ${SLURM_NODEID}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
 echo "SLURM GPU_PER_NODE: ${GPUS_PER_NODE}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
 echo "LOCAL_RANK: ${LOCAL_RANK}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
 echo "GLOBAL_RANK: ${GLOBAL_RANK}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
@@ -146,6 +150,26 @@ echo "CONFIG_FILE: ${CONFIG_FILE}" >> "slurm_output/env_variables_${GLOBAL_RANK}
 echo "OUTPUT_DIR: ${OUTPUT_DIR}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
 echo "RESUME_CHECKPOINT: ${RESUME_CHECKPOINT}" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
 echo "------------------------------------" >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
+
+# also echo these variables to the stderr
+echo "Master Address: ${MASTER_ADDR}" >&2
+echo "Master Port: ${MASTER_PORT}" >&2
+echo "SLURM Node List: ${SLURM_NODELIST}" >&2
+echo "SLURM Job ID: ${SLURM_JOB_ID}" >&2
+echo "SLURM Proc ID: ${SLURM_PROCID}" >&2
+echo "SLURM NTASKS: ${SLURM_NTASKS}" >&2
+echo "SLURM NNODES: ${SLURM_NNODES}" >&2
+echo "hostname: $(hostname)" >&2
+echo "SLURM_TASKS_PER_NODE: ${SLURM_TASKS_PER_NODE}" >&2
+echo "SLURM_NODEID: ${SLURM_NODEID}" >&2
+echo "SLURM GPU_PER_NODE: ${GPUS_PER_NODE}" >&2
+echo "LOCAL_RANK: ${LOCAL_RANK}" >&2
+echo "GLOBAL_RANK: ${GLOBAL_RANK}" >&2
+echo "------------------------------------" >&2
+echo "CONFIG_FILE: ${CONFIG_FILE}" >&2
+echo "OUTPUT_DIR: ${OUTPUT_DIR}" >&2
+echo "RESUME_CHECKPOINT: ${RESUME_CHECKPOINT}" >&2
+echo "------------------------------------" >&2
 
 export LAUNCHER="accelerate launch --config_file ../quickstart/configs/accelerate_config_8nodes.yaml --num_processes $((SLURM_NNODES * GPUS_PER_NODE)) --num_machines $SLURM_NNODES \
     --rdzv_backend c10d \
@@ -171,4 +195,4 @@ export CMD="$LAUNCHER $SCRIPT $ARGS"
 
 echo $CMD >> "slurm_output/env_variables_${GLOBAL_RANK}.txt"
 
-$CMD
+srun $CMD
