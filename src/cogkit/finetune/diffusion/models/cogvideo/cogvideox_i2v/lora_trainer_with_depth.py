@@ -156,7 +156,16 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         # Shape of trajectory: [B, seq_len, 8]
         
         
-        print(f"debug: line 159, latent: {latent.dtype}")
+        print(f"debug: line 159, latent: {latent.dtype}, prompt_embedding: {prompt_embedding.dtype}, images: {images.dtype}, depths: {depths.dtype}, trajectory: {trajectory.dtype}")
+        
+        try:
+            print(f"debug: line 162")
+            print(f"self.components.vae: {self.components.vae.dtype}, {self.components.vae.device}")
+            print(f"self.components.transformer: {self.components.transformer.transformer.dtype}")
+            for p in self.components.transformer.trajectory_encoder.parameters():
+                print(f"debug: line 166, {p.dtype}, {p.device}")
+        except Exception as e:
+            print(f"debug: line 168, {e}")
         
 
         patch_size_t = self.state.transformer_config.patch_size_t
@@ -264,7 +273,7 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         )
         
         
-        print(f"debug: line 267, latent_img_noisy: {latent_img_noisy.dtype}, prompot_embedding: {prompt_embedding.dtype}, timesteps: {timesteps.dtype}")
+        print(f"debug: line 276, latent_img_noisy: {latent_img_noisy.dtype}, prompot_embedding: {prompt_embedding.dtype}, timesteps: {timesteps.dtype}")
         
 
         # Predict noise, For CogVideoX1.5 Only.
