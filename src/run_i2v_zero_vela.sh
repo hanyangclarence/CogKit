@@ -3,6 +3,7 @@
 
 # Prevent tokenizer parallelism issues
 export TOKENIZERS_PARALLELISM=false
+export WANDB_API_KEY="28b3c634497c0dc6c16767729d4719b1012a94f2"
 
 # Initialize argument variables
 DEBUG_ARG=()
@@ -60,7 +61,7 @@ MODEL_ARGS=(
 # Output Configuration
 OUTPUT_ARGS=(
     --output_dir "$OUTPUT_DIR"
-    --report_to "tensorboard"
+    --report_to "wandb"
 )
 
 # Data Configuration

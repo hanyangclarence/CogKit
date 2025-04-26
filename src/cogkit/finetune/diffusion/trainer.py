@@ -69,6 +69,7 @@ class DiffusionTrainer(BaseTrainer):
             **additional_args,
             **self.additional_configs["dataset"]["params"],
             using_train=True,
+            debug=self.args.debug,
         )
         if self.args.do_validation:
             self.test_dataset = dataset_cls(
@@ -76,6 +77,7 @@ class DiffusionTrainer(BaseTrainer):
                 **additional_args,
                 **self.additional_configs["dataset"]["params"],
                 using_train=False,
+                debug=self.args.debug,
             )
 
         # Prepare VAE and text encoder for encoding

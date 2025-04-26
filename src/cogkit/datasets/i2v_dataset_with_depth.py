@@ -55,6 +55,7 @@ class BaseI2VDataset(Dataset):
         using_train: bool = True,
         target_traj_length: int = 32,
         get_traj_fn_name: str = "",
+        debug: bool = False,
         *args,
         **kwargs,
     ) -> None:
@@ -129,6 +130,10 @@ class BaseI2VDataset(Dataset):
             return example
         
         self.data = video_data.with_transform(add_first_frame)
+        
+        if debug:
+            # use the first 300 samples for debugging
+            self.data = self.data.select(range(300))
 
 
         self.device = device
