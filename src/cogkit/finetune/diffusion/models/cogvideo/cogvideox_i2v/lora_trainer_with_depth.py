@@ -154,6 +154,10 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
         # Shape of images: [B, C, H, W]
         # Shape of depth: [B, C, H, W]
         # Shape of trajectory: [B, seq_len, 8]
+        
+        
+        print(f"debug: line 159, latent: {latent.dtype}")
+        
 
         patch_size_t = self.state.transformer_config.patch_size_t
         if patch_size_t is not None:
@@ -258,6 +262,10 @@ class CogVideoXI2VLoraTrainer(DiffusionTrainer):
             if transformer_config.use_rotary_positional_embeddings
             else None
         )
+        
+        
+        print(f"debug: line 267, latent_img_noisy: {latent_img_noisy.dtype}, prompot_embedding: {prompt_embedding.dtype}, timesteps: {timesteps.dtype}")
+        
 
         # Predict noise, For CogVideoX1.5 Only.
         ofs_emb = (
