@@ -85,7 +85,7 @@ TRAIN_ARGS=(
     --learning_rate 2e-5
 
     #########   Please keep consistent with deepspeed config file ##########
-    --batch_size 1
+    --batch_size 20
     --gradient_accumulation_steps 1
     --mixed_precision "bf16"  # ["no", "fp16"]  Note: CogVideoX-2B only supports fp16 training
     ########################################################################
