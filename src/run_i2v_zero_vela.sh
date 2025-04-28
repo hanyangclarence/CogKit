@@ -101,7 +101,7 @@ SYSTEM_ARGS=(
 # Checkpointing Configuration
 CHECKPOINT_ARGS=(
     --checkpointing_steps 100 # save checkpoint every x steps
-    --checkpointing_limit 1 # maximum number of checkpoints to keep, after which the oldest one is deleted
+    --checkpointing_limit 2 # maximum number of checkpoints to keep, after which the oldest one is deleted
 )
 # Add resume_from_checkpoint if provided
 if [[ -n "$RESUME_CHECKPOINT" ]]; then
