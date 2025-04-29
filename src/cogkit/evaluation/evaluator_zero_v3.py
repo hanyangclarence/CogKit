@@ -28,9 +28,10 @@ class Evaluator:
     def __init__(
             self, model_name: str, ckpt_dir: str, additional_cfg: str,
             resolution: tp.Tuple[int, int, int] = (17, 480, 720),
-            device: str = "cuda"
+            device: str = "cuda", dtype: torch.dtype = torch.float16
     ):
         self.device = device
+        self.dtype = dtype
         self.resolution = resolution
         additional_cfg = OmegaConf.load(additional_cfg)
 
@@ -68,12 +69,12 @@ class Evaluator:
             scheduler=self.scheduler,
         )
 
-        self.pipe.to(torch.float16)
+        self.pipe.to(self.dtype)
         self.pipe.to(self.device)
         self.transformer.trajectory_encoder.to(self.device)
         self.transformer.trajectory_fuser.to(self.device)
-        self.transformer.trajectory_encoder.half()
-        self.transformer.trajectory_fuser.half()
+        self.transformer.trajectory_encoder.to(self.dtype)
+        self.transformer.trajectory_fuser.to(self.dtype)
 
     @torch.no_grad()
     def encode_text(self, prompt: str) -> torch.Tensor:
@@ -134,6 +135,7 @@ class Evaluator:
             image=image,
             depth=depth,
             generator=generator,
+            dtype=self.dtype,
         ).frames
 
         for idx, videos in enumerate(video_generate):

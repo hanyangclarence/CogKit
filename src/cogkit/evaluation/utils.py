@@ -243,6 +243,7 @@ def call_with_depth(
     model,
     image: PipelineImageInput,
     depth: PipelineImageInput,
+    dtype: torch.dtype,
     prompt: Optional[Union[str, List[str]]] = None,
     negative_prompt: Optional[Union[str, List[str]]] = None,
     height: Optional[int] = None,
@@ -470,18 +471,26 @@ def call_with_depth(
     model._current_timestep = None
 
     if not output_type == "latent":
-        # move the latent and vae to cpu
-        latents = latents.to(dtype=torch.float32, device="cpu")
-        model.vae = model.vae.to(dtype=torch.float32, device="cpu")
-        
-        # Discard any padding frames that were added for CogVideoX 1.5
-        latents = latents[:, additional_frames:]
-        video = model.decode_latents(latents)
-        video = model.video_processor.postprocess_video(video=video, output_type=output_type)
-        
-        # move back
-        model.to(torch.float16)
-        model.to(model._execution_device)
+        if dtype == torch.float16:
+            # on v100, gpu memory is not enough
+            # so move the latent and vae to cpu
+            latents = latents.to(dtype=torch.float32, device="cpu")
+            model.vae = model.vae.to(dtype=torch.float32, device="cpu")
+            
+            # Discard any padding frames that were added for CogVideoX 1.5
+            latents = latents[:, additional_frames:]
+            video = model.decode_latents(latents)
+            video = model.video_processor.postprocess_video(video=video, output_type=output_type)
+            
+            # move back
+            model.to(torch.float16)
+            model.to(model._execution_device)
+        else:
+            assert latents.dtype == torch.bfloat16
+            # Discard any padding frames that were added for CogVideoX 1.5
+            latents = latents[:, additional_frames:]
+            video = model.decode_latents(latents)
+            video = model.video_processor.postprocess_video(video=video, output_type=output_type)
     else:
         video = latents
 

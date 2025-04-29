@@ -4,6 +4,7 @@ import json
 import pickle
 import os
 import argparse
+import torch
 from decord import VideoReader
 from decord import cpu
 import random
@@ -30,6 +31,10 @@ task_list = [
     "meat_off_grill",                 # 16                
     "stack_cups",                     # 17 --> [15:18]
 ]
+dtype_map = {
+    "float16": torch.float16,
+    "bfloat16": torch.bfloat16,
+}
 
 # This version evaluates the model that conditioned on trajectory, first frame and first frame depth
 
@@ -39,6 +44,7 @@ if __name__ == "__main__":
     parser.add_argument("--ckpt", type=str, default="")
     parser.add_argument("--config", type=str, default="")
     parser.add_argument("--max_num_per_task", type=int, default=5)
+    parser.add_argument("--dtype", type=str, default="float16", choices=["float16", "bfloat16"])
     args = parser.parse_args()
     
     ckpt = args.ckpt
@@ -66,6 +72,7 @@ if __name__ == "__main__":
         additional_cfg=config_path,
         resolution=(17, 480, 720),
         device="cuda",
+        dtype=dtype_map[args.dtype],
     )
     
     with open(f"{data_dir}/metadata.jsonl", "r") as f:
