@@ -47,7 +47,7 @@ def get_traj_with_cam_coordinates(demo: Demo, target_traj_length: int) -> np.nda
         t_cam = T_cam[:3, 3]
         R_cam = quaternion.from_rotation_matrix(R_cam)
         R_cam = quaternion.as_float_array(R_cam)[[1, 2, 3, 0]]
-        gripper_pose_cam = np.concatenate([t_cam, R_cam, obs.gripper_open])  # (8,)
+        gripper_pose_cam = np.concatenate([t_cam, R_cam, [obs.gripper_open]])  # (8,)
         traj_cam_frame.append(gripper_pose_cam[None, ...])
         
         u, v, w = K @ t_cam
