@@ -1,0 +1,32 @@
+# This version is from v3
+# add action coordinate in both camera space and pixel space
+
+trainer_class: cogkit.finetune.diffusion.models.cogvideo.cogvideox_i2v.lora_trainer_with_depth.CogVideoXI2VLoraTrainer
+
+trajectory_encoder:
+  target: cogkit.finetune.modules.trajectory_encoder.TrajectoryEncoder
+  params:
+    input_dim: 18
+    d_model: 4096
+    nhead: 8
+    num_layers: 2
+    target_traj_len: 226
+
+trajectory_fuser:
+  target: cogkit.finetune.modules.fuser.AdditionFuser
+  params:
+    empty: true
+
+dataset:
+  target: cogkit.datasets.i2v_dataset_with_depth.I2VDatasetWithResize
+  data_root: /proj/long-multi/zfchen/yanghan/data/rlbench_videos
+  params:
+    target_traj_length: 226
+    get_traj_fn_name: "cogkit.datasets.get_traj_functions.get_traj_with_cam_coordinates"
+
+modify_model:
+  target: cogkit.finetune.utils.modify_model_utils.modify_in_conv
+
+evaluation:
+  lora_evaluator: None
+  zero_evaluator: cogkit.evaluation.evaluator_zero_v3.Evaluator
