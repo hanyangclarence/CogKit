@@ -15,10 +15,9 @@ deepspeed_config:
   zero3_init_flag: false
 
 downcast_bf16: 'no'
-mixed_precision: bf16
 enable_cpu_affinity: false
 machine_rank: 0
-main_process_ip: z-chuang-yh-master-0
+main_process_ip: z-chuang-yh2-master-0
 main_process_port: 23456
 main_training_function: main
 num_machines: 1
