@@ -1,12 +1,7 @@
 #!/bin/bash
 
-
-conda activate cogvideo
-cd /proj/long-multi/zfchen/yanghan/code/CogKit/src
-
 # Prevent tokenizer parallelism issues
 export TOKENIZERS_PARALLELISM=false
-export WANDB_API_KEY="28b3c634497c0dc6c16767729d4719b1012a94f2"
 
 # Initialize argument variables
 DEBUG_ARG=()
