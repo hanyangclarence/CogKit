@@ -11,7 +11,7 @@ debug: false
 distributed_type: DEEPSPEED
 deepspeed_config:
   # deepspeed_multinode_launcher: standard
-  deepspeed_config_file: /gpfs/ebd/CogKit/quickstart/configs/zero/zero2_vela.yaml  # e.g. need use absolute path
+  deepspeed_config_file: /gpfs/yanghan/CogKit/quickstart/configs/zero/zero2_vela.yaml  # e.g. need use absolute path
   zero3_init_flag: false
 
 downcast_bf16: 'no'
