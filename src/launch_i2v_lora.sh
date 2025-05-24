@@ -6,7 +6,7 @@ export TOKENIZERS_PARALLELISM=false
 
 # Initialize argument arrays
 DEBUG_ARG=()
-CONFIG_ARG=(--config "config/v2.yaml")
+CONFIG_ARG=(--config "config/v3.yaml")
 
 # Process command line arguments
 while [[ $# -gt 0 ]]; do
@@ -24,8 +24,8 @@ done
 
 # Model Configuration
 MODEL_ARGS=(
-    --model_path "THUDM/CogVideoX-5B-I2V"
-    --model_name "cogvideox-i2v"  # candidate: ["cogvideox-i2v", "cogvideox1.5-i2v"]
+    --model_path "THUDM/CogVideoX1.5-5B-I2V"
+    --model_name "cogvideox1.5-i2v"  # candidate: ["cogvideox-i2v", "cogvideox1.5-i2v"]
     --model_type "i2v"
     --training_type "lora"
 )

@@ -19,7 +19,7 @@ trajectory_fuser:
 
 dataset:
   target: cogkit.datasets.i2v_dataset_with_depth.I2VDatasetWithResize
-  data_root: /proj/long-multi/zfchen/yanghan/data/rlbench_videos
+  data_root: /gpfs/u/home/LMCG/LMCGhazh/scratch/enroot/rlbench_data/root/RACER-DataGen/racer_datagen/rlbench_videos
   params:
     target_traj_length: 226
     get_traj_fn_name: "cogkit.datasets.get_traj_functions.get_traj_from_obs"
