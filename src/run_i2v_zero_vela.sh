@@ -50,8 +50,8 @@ CONFIG_ARG=(--config "$CONFIG_FILE")
 
 # Model Configuration
 MODEL_ARGS=(
-    --model_path "THUDM/CogVideoX-5B-I2V"
-    --model_name "cogvideox-i2v"  # candidate: ["cogvideox-i2v", "cogvideox1.5-i2v"]
+    --model_path "THUDM/CogVideoX1.5-5B-I2V"
+    --model_name "cogvideox1.5-i2v"  # candidate: ["cogvideox-i2v", "cogvideox1.5-i2v"]
     --model_type "i2v"
     --training_type "sft"
 )
@@ -69,7 +69,7 @@ DATA_ARGS=(
     # Note:
     #  for CogVideoX series models, number of training frames should be **8N+1**
     #  for CogVideoX1.5 series models, number of training frames should be **16N+1**
-    --train_resolution "17x480x720"  # (frames x height x width)
+    --train_resolution "17x768x768"  # (frames x height x width)
 )
 
 # Training Configuration

@@ -5,6 +5,7 @@ from torch.nn.modules.conv import Conv2d
 def modify_in_conv(module: nn.Module) -> nn.Module:
     old_conv = module.transformer.transformer.patch_embed.proj
     assert isinstance(old_conv, Conv2d), f"Expected Conv2d, got {type(old_conv)}"
+    assert old_conv.in_channels == 32, f"Expected in_channels=32, got {old_conv.in_channels}"
     
     new_conv = Conv2d(
         in_channels=48,
