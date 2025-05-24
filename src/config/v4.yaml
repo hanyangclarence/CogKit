@@ -25,7 +25,7 @@ dataset:
     get_traj_fn_name: "cogkit.datasets.get_traj_functions.get_traj_with_cam_coordinates"
 
 modify_model:
-  target: cogkit.finetune.utils.modify_model_utils.modify_in_conv
+  target: cogkit.finetune.utils.modify_model_utils.modify_in_linear
 
 evaluation:
   lora_evaluator: None
