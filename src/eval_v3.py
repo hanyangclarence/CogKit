@@ -45,11 +45,13 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=str, default="")
     parser.add_argument("--max_num_per_task", type=int, default=5)
     parser.add_argument("--dtype", type=str, default="float16", choices=["float16", "bfloat16"])
+    parser.add_argument("--model_name", type=str, default="THUDM/CogVideoX-5B-I2V", choices=["THUDM/CogVideoX-5B-I2V", "THUDM/CogVideoX1.5-5B-I2V"])
+    parser.add_argument("--data_dir", type=str, default="/gpfs/u/scratch/LMCG/LMCGhazh/enroot/rlbench_data/root/RACER-DataGen/racer_datagen/rlbench_videos/test")
     args = parser.parse_args()
     
     ckpt = args.ckpt
     config_path = args.config
-    model_name = "THUDM/CogVideoX-5B-I2V"
+    model_name = args.model_name
     data_dir = "/gpfs/u/scratch/LMCG/LMCGhazh/enroot/rlbench_data/root/RACER-DataGen/racer_datagen/rlbench_videos/test"
     save_dir = "generated_videos"
     use_lora = False
