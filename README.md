@@ -1,8 +1,10 @@
 # CogKit
 
-## Train on Vela:
+## run training on on Vela:
 ```
-bash run_i2v_zero_vela.sh --config config/v4.yaml --output_dir training_logs/v4
+# 在ibm跳板机上
+cd ~/mnt/embodied_o1
+bash openshift/run_job2.sh openshift/train_cogkit_2nodes.yaml
 ```
 
 ## Eval on Vela:
