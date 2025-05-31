@@ -52,7 +52,7 @@ if __name__ == "__main__":
     ckpt = args.ckpt
     config_path = args.config
     model_name = args.model_name
-    data_dir = "/gpfs/u/scratch/LMCG/LMCGhazh/enroot/rlbench_data/root/RACER-DataGen/racer_datagen/rlbench_videos/test"
+    data_dir = args.data_dir
     save_dir = "generated_videos"
     use_lora = False
     max_num_per_task = args.max_num_per_task
